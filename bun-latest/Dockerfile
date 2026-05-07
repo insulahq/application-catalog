@@ -1,14 +1,15 @@
 FROM oven/bun:1.2
 
+# oven/bun base image already has user `bun` at UID 1000 — reuse rather
+# than creating a conflicting webuser.
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
   && rm -rf /var/lib/apt/lists/* \
-  && useradd -u 1000 -ms /bin/bash webuser 2>/dev/null || true \
-  && mkdir -p /app && chown -R webuser:webuser /app
+  && mkdir -p /app && chown -R bun:bun /app
 
 WORKDIR /app
-USER webuser
+USER bun
 
 EXPOSE 3000
 
