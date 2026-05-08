@@ -14,7 +14,7 @@
         {
             "name": "dolibarr",
             "type": "deployment",
-            "image": "tuxgasy/dolibarr:20.0.2",
+            "image": "tuxgasy/dolibarr:19.0.2",
             "ports": [
                 {
                     "port": 80,
@@ -187,7 +187,7 @@
             "components": [
                 {
                     "name": "dolibarr",
-                    "image": "tuxgasy/dolibarr:19.0.3"
+                    "image": "tuxgasy/dolibarr:19.0.2"
                 }
             ],
             "eolDate": "2026-12-31",
@@ -199,7 +199,7 @@
             "components": [
                 {
                     "name": "dolibarr",
-                    "image": "tuxgasy/dolibarr:20.0.2"
+                    "image": "tuxgasy/dolibarr:19.0.2"
                 }
             ],
             "upgradeFrom": [
