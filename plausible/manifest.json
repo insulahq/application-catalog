@@ -212,7 +212,9 @@
             "DATABASE_URL": "postgresql://plausible:{{ENV:POSTGRES_PASSWORD}}@{{SERVICE:postgresql}}/plausible_db",
             "CLICKHOUSE_DATABASE_URL": "http://default@{{SERVICE:clickhouse}}:8123/plausible_events_db",
             "ADMIN_USER_NAME": "Administrator",
-            "ADMIN_USER_EMAIL": "admin@example.com"
+            "ADMIN_USER_EMAIL": "admin@example.com",
+            "BASE_URL": "http://localhost:8000",
+            "LOG_LEVEL": "info"
         },
         "configurable": [
             "BASE_URL",
