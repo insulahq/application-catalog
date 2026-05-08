@@ -14,7 +14,7 @@
         {
             "name": "discourse",
             "type": "deployment",
-            "image": "discourse/discourse:latest",
+            "image": "discourse/discourse@sha256:4fa9ca7ca8b8db523cfe90c38b49c42f07070711000b1bc2d85584e6d0029631",
             "ports": [
                 {
                     "port": 3000,
@@ -173,7 +173,7 @@
             "components": [
                 {
                     "name": "discourse",
-                    "image": "discourse/discourse:latest"
+                    "image": "discourse/discourse@sha256:4fa9ca7ca8b8db523cfe90c38b49c42f07070711000b1bc2d85584e6d0029631"
                 }
             ],
             "eolDate": "2026-09-30",
@@ -185,7 +185,7 @@
             "components": [
                 {
                     "name": "discourse",
-                    "image": "discourse/discourse:latest"
+                    "image": "discourse/discourse@sha256:4fa9ca7ca8b8db523cfe90c38b49c42f07070711000b1bc2d85584e6d0029631"
                 }
             ],
             "upgradeFrom": [
