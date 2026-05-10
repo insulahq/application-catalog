@@ -15,11 +15,6 @@
             "name": "invoiceninja",
             "type": "deployment",
             "image": "invoiceninja/invoiceninja-debian:5",
-            "command": [
-                "sh",
-                "-c",
-                "mkdir -p /var/www/html/storage/framework/cache /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views /var/www/html/storage/logs /var/www/html/storage/app && chown -R www-data:www-data /var/www/html/storage /var/www/html/public 2>/dev/null || true && exec /usr/local/bin/init.sh supervisord -c /etc/supervisor/supervisord.conf"
-            ],
             "ports": [
                 {
                     "port": 80,
@@ -199,7 +194,8 @@
         "generated": [
             "MARIADB_ROOT_PASSWORD",
             "INVOICENINJA_DB_PASSWORD",
-            "APP_KEY"
+            "APP_KEY",
+            "IN_PASSWORD"
         ],
         "fixed": {
             "MARIADB_DATABASE": "invoiceninja",
@@ -215,7 +211,8 @@
             "APP_URL": "http://localhost",
             "APP_DEBUG": "false",
             "REQUIRE_HTTPS": "false",
-            "APP_CIPHER": "AES-256-CBC"
+            "APP_CIPHER": "AES-256-CBC",
+            "IN_USER_EMAIL": "admin@example.com"
         },
         "configurable": [
             "APP_URL",
