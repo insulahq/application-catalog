@@ -189,7 +189,8 @@
         "fixed": {
             "MONGO_INITDB_ROOT_USERNAME": "root",
             "MONGO_INITDB_DATABASE": "rocketchat",
-            "MONGO_URL": "mongodb://root:{{ENV:MONGO_INITDB_ROOT_PASSWORD}}@{{SERVICE:mongodb}}:27017/rocketchat?authSource=admin"
+            "MONGO_URL": "mongodb://root:{{ENV_URLSAFE:MONGO_INITDB_ROOT_PASSWORD}}@{{SERVICE:mongodb}}:27017/rocketchat?authSource=admin",
+            "MONGO_OPLOG_URL": "mongodb://root:{{ENV_URLSAFE:MONGO_INITDB_ROOT_PASSWORD}}@{{SERVICE:mongodb}}:27017/local?authSource=admin"
         },
         "configurable": [
             "ROOT_URL"
