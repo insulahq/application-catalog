@@ -14,7 +14,7 @@
         {
             "name": "moodle",
             "type": "deployment",
-            "image": "moodlehq/moodle-php-apache:8.1",
+            "image": "bitnamilegacy/moodle:5.0.2",
             "ports": [
                 {
                     "port": 80,
@@ -30,7 +30,7 @@
         {
             "name": "mariadb",
             "type": "deployment",
-            "image": "mariadb:11.8",
+            "image": "bitnamilegacy/mariadb:11.8",
             "ports": [
                 {
                     "port": 3306,
@@ -45,7 +45,7 @@
         {
             "name": "redis",
             "type": "deployment",
-            "image": "redis:8-alpine",
+            "image": "bitnamilegacy/redis:8.2",
             "ports": [
                 {
                     "port": 6379,
@@ -59,7 +59,7 @@
         {
             "name": "moodle-cron",
             "type": "cronjob",
-            "image": "moodlehq/moodle-php-apache:8.1",
+            "image": "bitnamilegacy/moodle:5.0.2",
             "schedule": "*/1 * * * *",
             "volumes": [
                 "data",
@@ -223,11 +223,11 @@
             "components": [
                 {
                     "name": "moodle",
-                    "image": "moodlehq/moodle-php-apache:8.1"
+                    "image": "bitnamilegacy/moodle:4.5.4"
                 },
                 {
                     "name": "moodle-cron",
-                    "image": "moodlehq/moodle-php-apache:8.1"
+                    "image": "bitnamilegacy/moodle:4.5.4"
                 }
             ],
             "eolDate": "2026-09-30",
@@ -238,11 +238,11 @@
             "components": [
                 {
                     "name": "moodle",
-                    "image": "moodlehq/moodle-php-apache:8.1"
+                    "image": "bitnamilegacy/moodle:5.0.2"
                 },
                 {
                     "name": "moodle-cron",
-                    "image": "moodlehq/moodle-php-apache:8.1"
+                    "image": "bitnamilegacy/moodle:5.0.2"
                 }
             ],
             "upgradeFrom": [
