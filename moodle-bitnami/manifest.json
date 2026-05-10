@@ -23,7 +23,6 @@
                 }
             ],
             "volumes": [
-                "moodlehtml",
                 "moodledata"
             ]
         },
@@ -58,11 +57,6 @@
         "notes": "Moodle supports large file uploads (assignments, SCORM packages). Ingress proxy-body-size should be set to at least 256M; matching nginx upload_max_filesize/post_max_size already at 50M in the image."
     },
     "volumes": [
-        {
-            "local_path": "moodlehtml",
-            "container_path": "/var/www/html",
-            "description": "Moodle PHP application source (populated by image on first boot; persisted so plugin installs and upgrades survive container restarts)"
-        },
         {
             "local_path": "moodledata",
             "container_path": "/var/www/moodledata",
