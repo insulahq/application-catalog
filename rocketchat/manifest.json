@@ -33,7 +33,7 @@
             "command": [
                 "bash",
                 "-c",
-                "set -e\nmongod --replSet rs0 --bind_ip_all &\nMONGOD_PID=$!\nuntil mongosh --quiet --eval 'db.adminCommand({ping:1})' >/dev/null 2>&1; do sleep 1; done\nif ! mongosh --quiet --eval 'rs.status().ok' 2>/dev/null | grep -q '^1'; then\n  mongosh --quiet --eval 'rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"localhost:27017\"}]})'\nfi\nwait $MONGOD_PID\n"
+                "set -e\nmongod --replSet rs0 --bind_ip_all &\nMONGOD_PID=$!\nuntil mongosh --quiet --eval 'db.adminCommand({ping:1})' >/dev/null 2>&1; do sleep 1; done\nif ! mongosh --quiet --eval 'rs.status().ok' 2>/dev/null | grep -q '^1'; then\n  mongosh --quiet --eval \"rs.initiate({_id:'rs0',members:[{_id:0,host:'${MONGO_HOST}:27017'}]})\"\nfi\nwait $MONGOD_PID\n"
             ],
             "ports": [
                 {
@@ -190,6 +190,7 @@
     "env_vars": {
         "generated": [],
         "fixed": {
+            "MONGO_HOST": "{{SERVICE:mongodb}}",
             "MONGO_URL": "mongodb://{{SERVICE:mongodb}}:27017/rocketchat?replicaSet=rs0",
             "MONGO_OPLOG_URL": "mongodb://{{SERVICE:mongodb}}:27017/local?replicaSet=rs0",
             "NODE_OPTIONS": "--max-old-space-size=768",
