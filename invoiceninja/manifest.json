@@ -17,15 +17,38 @@
             "image": "invoiceninja/invoiceninja-debian:5",
             "ports": [
                 {
-                    "port": 80,
-                    "protocol": "TCP",
-                    "ingress": true
+                    "port": 9000,
+                    "protocol": "TCP"
                 }
             ],
             "volumes": [
                 "public",
                 "storage"
             ]
+        },
+        {
+            "name": "nginx",
+            "type": "deployment",
+            "image": "nginx:1.27-alpine",
+            "command": [
+                "sh",
+                "-c",
+                "cat > /etc/nginx/conf.d/default.conf <<'CONF'\nserver {\n    listen 80 default_server;\n    server_name _;\n    root /var/www/html/public;\n    index index.php;\n    client_max_body_size 50M;\n    location / { try_files $uri $uri/ /index.php?$query_string; }\n    location ~ \\.php$ {\n        fastcgi_pass FPM_HOST:9000;\n        fastcgi_index index.php;\n        include /etc/nginx/fastcgi_params;\n        fastcgi_param SCRIPT_FILENAME /var/www/html/public$fastcgi_script_name;\n        fastcgi_read_timeout 300;\n    }\n    location ~ /\\.ht { deny all; }\n}\nCONF\nsed -i \"s|FPM_HOST|${FPM_HOST}|g\" /etc/nginx/conf.d/default.conf\nexec nginx -g 'daemon off;'\n"
+            ],
+            "ports": [
+                {
+                    "port": 80,
+                    "protocol": "TCP",
+                    "ingress": true
+                }
+            ],
+            "volumes": [
+                "public"
+            ],
+            "resources": {
+                "cpu": "100m",
+                "memory": "64Mi"
+            }
         },
         {
             "name": "mariadb",
@@ -212,7 +235,8 @@
             "APP_DEBUG": "false",
             "REQUIRE_HTTPS": "false",
             "APP_CIPHER": "AES-256-CBC",
-            "IN_USER_EMAIL": "admin@example.com"
+            "IN_USER_EMAIL": "admin@example.com",
+            "FPM_HOST": "{{SERVICE:invoiceninja}}"
         },
         "configurable": [
             "APP_URL",
