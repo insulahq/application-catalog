@@ -39,11 +39,6 @@
                     "ingress": false
                 }
             ],
-            "env_vars": {
-                "fixed": {
-                    "PGDATA": "/var/lib/postgresql/data/pgdata"
-                }
-            },
             "volumes": [
                 "database"
             ]
@@ -75,8 +70,8 @@
         },
         {
             "local_path": "database",
-            "container_path": "/var/lib/postgresql/data",
-            "description": "PostgreSQL data directory"
+            "container_path": "/var/lib/postgresql",
+            "description": "PostgreSQL data directory (pg18-alpine inits at /var/lib/postgresql/18/docker inside this mount)"
         }
     ],
     "resources": {
