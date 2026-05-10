@@ -1,9 +1,9 @@
 {
-    "name": "Moodle Bitnami",
+    "name": "Moodle",
     "code": "moodle-bitnami",
     "type": "application",
-    "version": "5.0",
-    "description": "Run online courses, quizzes, and training programs with this full-featured learning platform.",
+    "version": "5.2",
+    "description": "Run online courses, quizzes, and training programs with this full-featured learning platform. Built on erseco/alpine-moodle (Alpine + PHP 8.3 + nginx) with PostgreSQL.",
     "url": "https://moodle.org",
     "documentation": "https://docs.moodle.org",
     "category": "education",
@@ -14,56 +14,38 @@
         {
             "name": "moodle",
             "type": "deployment",
-            "image": "bitnamilegacy/moodle:5.0.2",
+            "image": "erseco/alpine-moodle:v5.2.0",
             "ports": [
                 {
-                    "port": 80,
+                    "port": 8080,
                     "protocol": "TCP",
                     "ingress": true
                 }
             ],
             "volumes": [
-                "data",
-                "userdata"
+                "moodlehtml",
+                "moodledata"
             ]
         },
         {
-            "name": "mariadb",
+            "name": "postgresql",
             "type": "deployment",
-            "image": "bitnamilegacy/mariadb:11.8",
+            "image": "postgres:18-alpine",
+            "database": "postgresql",
             "ports": [
                 {
-                    "port": 3306,
+                    "port": 5432,
                     "protocol": "TCP",
                     "ingress": false
                 }
             ],
+            "env_vars": {
+                "fixed": {
+                    "PGDATA": "/var/lib/postgresql/data/pgdata"
+                }
+            },
             "volumes": [
                 "database"
-            ]
-        },
-        {
-            "name": "redis",
-            "type": "deployment",
-            "image": "bitnamilegacy/redis:8.2",
-            "ports": [
-                {
-                    "port": 6379,
-                    "protocol": "TCP",
-                    "ingress": false
-                }
-            ],
-            "optional": true,
-            "volumes": []
-        },
-        {
-            "name": "moodle-cron",
-            "type": "cronjob",
-            "image": "bitnamilegacy/moodle:5.0.2",
-            "schedule": "*/1 * * * *",
-            "volumes": [
-                "data",
-                "userdata"
             ]
         }
     ],
@@ -78,23 +60,23 @@
         ],
         "host_ports": [],
         "websocket": false,
-        "notes": "Moodle supports large file uploads (assignments, SCORM packages). Ingress proxy-body-size should be set to at least 256M."
+        "notes": "Moodle supports large file uploads (assignments, SCORM packages). Ingress proxy-body-size should be set to at least 256M; matching nginx upload_max_filesize/post_max_size already at 50M in the image."
     },
     "volumes": [
         {
-            "local_path": "data",
-            "container_path": "/bitnami/moodle",
-            "description": "Moodle application data, uploaded files, and course content"
+            "local_path": "moodlehtml",
+            "container_path": "/var/www/html",
+            "description": "Moodle PHP application source (populated by image on first boot; persisted so plugin installs and upgrades survive container restarts)"
         },
         {
-            "local_path": "userdata",
-            "container_path": "/bitnami/moodledata",
+            "local_path": "moodledata",
+            "container_path": "/var/www/moodledata",
             "description": "Moodle data directory (filedir, cache, sessions)"
         },
         {
             "local_path": "database",
-            "container_path": "/bitnami/mariadb",
-            "description": "MariaDB data directory"
+            "container_path": "/var/lib/postgresql/data",
+            "description": "PostgreSQL data directory"
         }
     ],
     "resources": {
@@ -111,7 +93,7 @@
     },
     "health_check": {
         "path": "/login/index.php",
-        "port": 80,
+        "port": 8080,
         "initial_delay_seconds": 180,
         "period_seconds": 30
     },
@@ -140,74 +122,19 @@
             "label": "Site Name",
             "type": "string",
             "default": "Moodle",
-            "required": true
-        },
-        {
-            "key": "ingress.domain",
-            "label": "Domain",
-            "type": "string",
-            "required": true
-        },
-        {
-            "key": "moodle.lang",
-            "label": "Default Language",
-            "type": "string",
-            "default": "en"
-        },
-        {
-            "key": "moodle.phpMaxUploadSize",
-            "label": "PHP Upload Max Size",
-            "type": "string",
-            "default": "256M"
-        },
-        {
-            "key": "moodle.phpMemoryLimit",
-            "label": "PHP Memory Limit",
-            "type": "string",
-            "default": "512M"
-        },
-        {
-            "key": "redis.enabled",
-            "label": "Enable Redis Session Cache",
-            "type": "boolean",
-            "default": true
-        },
-        {
-            "key": "moodle.smtpHost",
-            "label": "SMTP Server",
-            "type": "string",
             "required": false
-        },
-        {
-            "key": "moodle.smtpPort",
-            "label": "SMTP Port",
-            "type": "integer",
-            "default": 587,
-            "required": false
-        },
-        {
-            "key": "moodle.smtpUser",
-            "label": "SMTP Username",
-            "type": "string",
-            "required": false
-        },
-        {
-            "key": "moodle.smtpPassword",
-            "label": "SMTP Password",
-            "type": "secret",
-            "required": false
-        },
-        {
-            "key": "mariadb.storageSize",
-            "label": "Database Storage Size",
-            "type": "string",
-            "default": "10Gi"
         },
         {
             "key": "moodle.dataStorageSize",
             "label": "Moodle Data Storage Size",
             "type": "string",
             "default": "20Gi"
+        },
+        {
+            "key": "postgresql.storageSize",
+            "label": "Database Storage Size",
+            "type": "string",
+            "default": "10Gi"
         }
     ],
     "tags": [
@@ -223,11 +150,7 @@
             "components": [
                 {
                     "name": "moodle",
-                    "image": "bitnamilegacy/moodle:4.5.4"
-                },
-                {
-                    "name": "moodle-cron",
-                    "image": "bitnamilegacy/moodle:4.5.4"
+                    "image": "erseco/alpine-moodle:v4.5.11"
                 }
             ],
             "eolDate": "2026-09-30",
@@ -238,37 +161,65 @@
             "components": [
                 {
                     "name": "moodle",
-                    "image": "bitnamilegacy/moodle:5.0.2"
-                },
+                    "image": "erseco/alpine-moodle:v5.0.7"
+                }
+            ],
+            "isDefault": false
+        },
+        {
+            "version": "5.1",
+            "components": [
                 {
-                    "name": "moodle-cron",
-                    "image": "bitnamilegacy/moodle:5.0.2"
+                    "name": "moodle",
+                    "image": "erseco/alpine-moodle:v5.1.4"
+                }
+            ],
+            "isDefault": false
+        },
+        {
+            "version": "5.2",
+            "components": [
+                {
+                    "name": "moodle",
+                    "image": "erseco/alpine-moodle:v5.2.0"
                 }
             ],
             "upgradeFrom": [
-                "4.5"
+                "4.5",
+                "5.0",
+                "5.1"
             ],
-            "breakingChanges": "Major version upgrade from Moodle 4.x to 5.x. Review plugin compatibility.",
             "isDefault": true
         }
     ],
     "env_vars": {
         "generated": [
-            "MARIADB_ROOT_PASSWORD",
-            "MOODLE_DATABASE_PASSWORD"
+            "POSTGRES_PASSWORD",
+            "MOODLE_PASSWORD"
         ],
         "fixed": {
-            "MARIADB_DATABASE": "bitnami_moodle",
-            "MARIADB_USER": "bn_moodle",
-            "MARIADB_PASSWORD": "{{ENV:MOODLE_DATABASE_PASSWORD}}",
-            "MOODLE_DATABASE_HOST": "{{SERVICE:mariadb}}",
-            "MOODLE_DATABASE_TYPE": "mariadb",
-            "MOODLE_DATABASE_NAME": "bitnami_moodle",
-            "MOODLE_DATABASE_USER": "bn_moodle"
+            "POSTGRES_DB": "moodle",
+            "POSTGRES_USER": "moodle",
+            "DB_TYPE": "pgsql",
+            "DB_HOST": "{{SERVICE:postgresql}}",
+            "DB_PORT": "5432",
+            "DB_NAME": "moodle",
+            "DB_USER": "moodle",
+            "DB_PASS": "{{ENV:POSTGRES_PASSWORD}}",
+            "MOODLE_USERNAME": "admin",
+            "MOODLE_EMAIL": "admin@example.com",
+            "MOODLE_SITENAME": "Moodle",
+            "SITE_URL": "http://localhost:8080",
+            "SSLPROXY": "true",
+            "REVERSEPROXY": "false",
+            "AUTO_UPDATE_MOODLE": "true",
+            "RUN_CRON_TASKS": "true"
         },
         "configurable": [
             "MOODLE_EMAIL",
-            "BITNAMI_DEBUG"
+            "MOODLE_SITENAME",
+            "SITE_URL",
+            "DEBUG"
         ]
     }
 }
