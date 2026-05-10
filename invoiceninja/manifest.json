@@ -15,6 +15,11 @@
             "name": "invoiceninja",
             "type": "deployment",
             "image": "invoiceninja/invoiceninja-debian:5",
+            "command": [
+                "sh",
+                "-c",
+                "mkdir -p /var/www/html/storage/framework/cache /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views /var/www/html/storage/logs /var/www/html/storage/app && chown -R www-data:www-data /var/www/html/storage /var/www/html/public 2>/dev/null || true && exec /usr/local/bin/init.sh supervisord -c /etc/supervisor/supervisord.conf"
+            ],
             "ports": [
                 {
                     "port": 80,
@@ -55,12 +60,12 @@
     "volumes": [
         {
             "local_path": "public",
-            "container_path": "/var/www/app/public",
+            "container_path": "/var/www/html/public",
             "description": "Public assets and generated files"
         },
         {
             "local_path": "storage",
-            "container_path": "/var/www/app/storage",
+            "container_path": "/var/www/html/storage",
             "description": "Application storage (invoices, logs, cache)"
         },
         {
