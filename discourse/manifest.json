@@ -2,7 +2,7 @@
     "name": "Discourse",
     "code": "discourse",
     "type": "application",
-    "version": "3",
+    "version": "3.5",
     "description": "Build an online community with modern discussion forums, categories, and user engagement features.",
     "url": "https://www.discourse.org",
     "documentation": "https://meta.discourse.org/docs",
@@ -14,7 +14,7 @@
         {
             "name": "discourse",
             "type": "deployment",
-            "image": "discourse/discourse@sha256:4fa9ca7ca8b8db523cfe90c38b49c42f07070711000b1bc2d85584e6d0029631",
+            "image": "bitnamilegacy/discourse:3.5.0",
             "ports": [
                 {
                     "port": 3000,
@@ -29,7 +29,8 @@
         {
             "name": "postgresql",
             "type": "deployment",
-            "image": "postgres:17-alpine",
+            "image": "bitnamilegacy/postgresql:17.6.0",
+            "database": "postgresql",
             "ports": [
                 {
                     "port": 5432,
@@ -44,7 +45,7 @@
         {
             "name": "redis",
             "type": "deployment",
-            "image": "redis:8-alpine",
+            "image": "bitnamilegacy/redis:8.2",
             "ports": [
                 {
                     "port": 6379,
@@ -70,13 +71,13 @@
     "volumes": [
         {
             "local_path": "data",
-            "container_path": "/shared",
-            "description": "Discourse shared data and uploads"
+            "container_path": "/bitnami/discourse",
+            "description": "Discourse plugins, public/backups, public/uploads (per DISCOURSE_DATA_TO_PERSIST default)"
         },
         {
             "local_path": "database",
-            "container_path": "/var/lib/postgresql/data",
-            "description": "PostgreSQL data directory"
+            "container_path": "/bitnami/postgresql",
+            "description": "PostgreSQL data directory (bitnami convention)"
         }
     ],
     "resources": {
@@ -94,7 +95,7 @@
     "health_check": {
         "path": "/srv/status",
         "port": 3000,
-        "initial_delay_seconds": 120,
+        "initial_delay_seconds": 180,
         "period_seconds": 30
     },
     "parameters": [
@@ -169,50 +170,60 @@
     ],
     "supportedVersions": [
         {
-            "version": "2",
+            "version": "3.4",
             "components": [
                 {
                     "name": "discourse",
-                    "image": "discourse/discourse@sha256:4fa9ca7ca8b8db523cfe90c38b49c42f07070711000b1bc2d85584e6d0029631"
+                    "image": "bitnamilegacy/discourse:3.4.7"
                 }
             ],
             "eolDate": "2026-09-30",
-            "migrationNotes": "Discourse 2.x reaches end-of-life September 2026. Upgrade to 3.x.",
             "isDefault": false
         },
         {
-            "version": "3",
+            "version": "3.5",
             "components": [
                 {
                     "name": "discourse",
-                    "image": "discourse/discourse@sha256:4fa9ca7ca8b8db523cfe90c38b49c42f07070711000b1bc2d85584e6d0029631"
+                    "image": "bitnamilegacy/discourse:3.5.0"
                 }
             ],
             "upgradeFrom": [
-                "2"
+                "3.4"
             ],
-            "breakingChanges": "Major version upgrade. Check plugin compatibility.",
             "isDefault": true
         }
     ],
     "env_vars": {
         "generated": [
-            "POSTGRES_PASSWORD"
+            "POSTGRESQL_PASSWORD",
+            "DISCOURSE_PASSWORD"
         ],
         "fixed": {
-            "POSTGRES_DB": "discourse",
-            "POSTGRES_USER": "discourse",
+            "POSTGRESQL_DATABASE": "bitnami_discourse",
+            "POSTGRESQL_USERNAME": "bn_discourse",
             "DISCOURSE_DATABASE_HOST": "{{SERVICE:postgresql}}",
             "DISCOURSE_DATABASE_PORT_NUMBER": "5432",
-            "DISCOURSE_DATABASE_NAME": "discourse",
-            "DISCOURSE_DATABASE_USER": "discourse",
-            "DISCOURSE_DATABASE_PASSWORD": "{{ENV:POSTGRES_PASSWORD}}",
+            "DISCOURSE_DATABASE_NAME": "bitnami_discourse",
+            "DISCOURSE_DATABASE_USER": "bn_discourse",
+            "DISCOURSE_DATABASE_PASSWORD": "{{ENV:POSTGRESQL_PASSWORD}}",
             "DISCOURSE_REDIS_HOST": "{{SERVICE:redis}}",
-            "DISCOURSE_REDIS_PORT_NUMBER": "6379"
+            "DISCOURSE_REDIS_PORT_NUMBER": "6379",
+            "DISCOURSE_HOST": "localhost",
+            "DISCOURSE_USERNAME": "admin",
+            "DISCOURSE_EMAIL": "admin@example.com",
+            "DISCOURSE_SITE_NAME": "My Discourse Forum",
+            "DISCOURSE_PRECOMPILE_ASSETS": "no",
+            "ALLOW_EMPTY_PASSWORD": "yes"
         },
         "configurable": [
-            "DISCOURSE_HOSTNAME",
-            "DISCOURSE_DEVELOPER_EMAILS"
+            "DISCOURSE_HOST",
+            "DISCOURSE_EMAIL",
+            "DISCOURSE_SITE_NAME",
+            "DISCOURSE_SMTP_HOST",
+            "DISCOURSE_SMTP_PORT_NUMBER",
+            "DISCOURSE_SMTP_USER",
+            "DISCOURSE_SMTP_PASSWORD"
         ]
     }
 }
