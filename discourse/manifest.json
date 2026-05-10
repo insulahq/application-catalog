@@ -29,7 +29,7 @@
         {
             "name": "postgresql",
             "type": "deployment",
-            "image": "bitnamilegacy/postgresql:17.6.0",
+            "image": "pgvector/pgvector:pg17",
             "database": "postgresql",
             "ports": [
                 {
@@ -76,8 +76,8 @@
         },
         {
             "local_path": "database",
-            "container_path": "/bitnami/postgresql",
-            "description": "PostgreSQL data directory (bitnami convention)"
+            "container_path": "/var/lib/postgresql/data",
+            "description": "PostgreSQL data directory (pgvector image is based on the official postgres image)"
         }
     ],
     "resources": {
@@ -196,17 +196,17 @@
     ],
     "env_vars": {
         "generated": [
-            "POSTGRESQL_PASSWORD",
+            "POSTGRES_PASSWORD",
             "DISCOURSE_PASSWORD"
         ],
         "fixed": {
-            "POSTGRESQL_DATABASE": "bitnami_discourse",
-            "POSTGRESQL_USERNAME": "bn_discourse",
+            "POSTGRES_DB": "bitnami_discourse",
+            "POSTGRES_USER": "bn_discourse",
             "DISCOURSE_DATABASE_HOST": "{{SERVICE:postgresql}}",
             "DISCOURSE_DATABASE_PORT_NUMBER": "5432",
             "DISCOURSE_DATABASE_NAME": "bitnami_discourse",
             "DISCOURSE_DATABASE_USER": "bn_discourse",
-            "DISCOURSE_DATABASE_PASSWORD": "{{ENV:POSTGRESQL_PASSWORD}}",
+            "DISCOURSE_DATABASE_PASSWORD": "{{ENV:POSTGRES_PASSWORD}}",
             "DISCOURSE_REDIS_HOST": "{{SERVICE:redis}}",
             "DISCOURSE_REDIS_PORT_NUMBER": "6379",
             "DISCOURSE_HOST": "localhost",
