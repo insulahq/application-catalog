@@ -14,7 +14,7 @@
         {
             "name": "vaultwarden",
             "type": "deployment",
-            "image": "vaultwarden/server:1.35.4",
+            "image": "vaultwarden/server:1",
             "ports": [
                 {
                     "port": 80,

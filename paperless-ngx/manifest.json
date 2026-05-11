@@ -14,7 +14,7 @@
         {
             "name": "paperless",
             "type": "deployment",
-            "image": "ghcr.io/paperless-ngx/paperless-ngx:2.20.13",
+            "image": "ghcr.io/paperless-ngx/paperless-ngx:2",
             "ports": [
                 {
                     "port": 8000,
@@ -211,7 +211,7 @@
             "components": [
                 {
                     "name": "paperless",
-                    "image": "ghcr.io/paperless-ngx/paperless-ngx:2.20.13"
+                    "image": "ghcr.io/paperless-ngx/paperless-ngx:2"
                 }
             ],
             "upgradeFrom": [
