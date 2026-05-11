@@ -37,6 +37,12 @@
             "description": "Entry type — determines which additional fields are required",
             "enum": ["application", "runtime", "database", "service", "static"]
         },
+        "versionLockMode": {
+            "type": "string",
+            "description": "Upgrade policy enforced by the platform. 'strict' blocks any version change not in the target's upgradeFrom array (Nextcloud, Moodle, WordPress majors). 'advisory' (default) allows admin override via force=true. 'open' disables the guard entirely (stateless services).",
+            "enum": ["strict", "advisory", "open"],
+            "default": "advisory"
+        },
         "version": {
             "type": "string",
             "description": "Primary version (e.g., '6.9', '8.4', '10.6')",

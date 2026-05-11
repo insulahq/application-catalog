@@ -2,6 +2,7 @@
     "name": "WordPress",
     "code": "wordpress",
     "type": "application",
+    "versionLockMode": "strict",
     "version": "6.9",
     "description": "Create and manage your own website or blog with the world's most popular content management system.",
     "url": "https://wordpress.org",
@@ -197,7 +198,7 @@
             "type": "boolean",
             "default": false,
             "advanced": true,
-            "description": "Enables WP_DEBUG in wp-config.php. Verbose — leave off in production."
+            "description": "Enables WP_DEBUG in wp-config.php. Verbose \u2014 leave off in production."
         },
         {
             "key": "WORDPRESS_CONFIG_EXTRA",

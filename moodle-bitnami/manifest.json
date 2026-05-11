@@ -2,6 +2,7 @@
     "name": "Moodle",
     "code": "moodle-bitnami",
     "type": "application",
+    "versionLockMode": "strict",
     "version": "5.2",
     "description": "Run online courses, quizzes, and training programs with this full-featured learning platform. Built on erseco/alpine-moodle (Alpine + PHP 8.3 + nginx) with PostgreSQL.",
     "url": "https://moodle.org",
@@ -153,6 +154,7 @@
                     "image": "erseco/alpine-moodle:v5.0.7"
                 }
             ],
+            "upgradeFrom": ["4.5"],
             "isDefault": false
         },
         {
@@ -163,6 +165,7 @@
                     "image": "erseco/alpine-moodle:v5.1.4"
                 }
             ],
+            "upgradeFrom": ["5.0"],
             "isDefault": false
         },
         {
@@ -173,11 +176,7 @@
                     "image": "erseco/alpine-moodle:v5.2.0"
                 }
             ],
-            "upgradeFrom": [
-                "4.5",
-                "5.0",
-                "5.1"
-            ],
+            "upgradeFrom": ["5.1"],
             "isDefault": true
         }
     ],

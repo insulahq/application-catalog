@@ -2,6 +2,7 @@
     "name": "Nextcloud",
     "code": "nextcloud",
     "type": "application",
+    "versionLockMode": "strict",
     "version": "33",
     "description": "Your own private cloud for files, calendars, contacts, and real-time document collaboration.",
     "url": "https://nextcloud.com",

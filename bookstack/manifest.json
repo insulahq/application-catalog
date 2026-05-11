@@ -2,6 +2,7 @@
     "name": "BookStack",
     "code": "bookstack",
     "type": "application",
+    "versionLockMode": "strict",
     "version": "26.03.2",
     "description": "Organize your team's knowledge with an easy-to-use wiki that anyone can edit and search.",
     "url": "https://www.bookstackapp.com",
