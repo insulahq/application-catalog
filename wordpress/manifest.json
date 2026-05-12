@@ -25,7 +25,12 @@
             ],
             "volumes": [
                 "content"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 50,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "mariadb",
@@ -41,7 +46,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 35,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "redis",
@@ -55,7 +65,12 @@
                 }
             ],
             "optional": true,
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 5,
+                "minCpu": "20m",
+                "minMemory": "32Mi"
+            }
         },
         {
             "name": "wp-cron",
@@ -65,7 +80,12 @@
             "optional": true,
             "volumes": [
                 "content"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "50m",
+                "minMemory": "64Mi"
+            }
         },
         {
             "name": "wp-install",
@@ -114,8 +134,8 @@
             "storage": "5Gi"
         },
         "recommended": {
-            "cpu": "0.50",
-            "memory": "512Mi",
+            "cpu": "0.75",
+            "memory": "768Mi",
             "storage": "15Gi"
         }
     },
@@ -198,7 +218,7 @@
             "type": "boolean",
             "default": false,
             "advanced": true,
-            "description": "Enables WP_DEBUG in wp-config.php. Verbose \u2014 leave off in production."
+            "description": "Enables WP_DEBUG in wp-config.php. Verbose — leave off in production."
         },
         {
             "key": "WORDPRESS_CONFIG_EXTRA",

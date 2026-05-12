@@ -24,7 +24,12 @@
             "volumes": [
                 "public",
                 "storage"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 50,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "nginx",
@@ -48,6 +53,11 @@
             "resources": {
                 "cpu": "100m",
                 "memory": "64Mi"
+            },
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "30m",
+                "minMemory": "32Mi"
             }
         },
         {
@@ -62,7 +72,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 40,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         }
     ],
     "networking": {

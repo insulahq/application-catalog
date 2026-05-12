@@ -24,7 +24,12 @@
             ],
             "volumes": [
                 "config"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 20,
+                "minCpu": "50m",
+                "minMemory": "128Mi"
+            }
         },
         {
             "name": "prosody",
@@ -45,7 +50,12 @@
             "volumes": [
                 "config",
                 "plugins"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 20,
+                "minCpu": "100m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "jicofo",
@@ -54,7 +64,12 @@
             "ports": [],
             "volumes": [
                 "config"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 20,
+                "minCpu": "100m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "jvb",
@@ -69,7 +84,12 @@
             ],
             "volumes": [
                 "config"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 30,
+                "minCpu": "200m",
+                "minMemory": "512Mi"
+            }
         },
         {
             "name": "coturn",
@@ -88,7 +108,12 @@
                 }
             ],
             "optional": true,
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "50m",
+                "minMemory": "128Mi"
+            }
         }
     ],
     "networking": {

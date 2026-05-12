@@ -22,7 +22,12 @@
                     "ingress": true
                 }
             ],
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 60,
+                "minCpu": "50m",
+                "minMemory": "128Mi"
+            }
         },
         {
             "name": "postgresql",
@@ -43,7 +48,12 @@
             },
             "volumes": [
                 "."
-            ]
+            ],
+            "resourceShare": {
+                "weight": 40,
+                "minCpu": "100m",
+                "minMemory": "128Mi"
+            }
         }
     ],
     "networking": {
@@ -72,8 +82,8 @@
             "storage": "2Gi"
         },
         "recommended": {
-            "cpu": "0.25",
-            "memory": "256Mi",
+            "cpu": "0.50",
+            "memory": "512Mi",
             "storage": "5Gi"
         }
     },

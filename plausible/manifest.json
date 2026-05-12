@@ -27,7 +27,12 @@
                     "ingress": true
                 }
             ],
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 30,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "postgresql",
@@ -48,7 +53,12 @@
             },
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 20,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "clickhouse",
@@ -63,7 +73,12 @@
             ],
             "volumes": [
                 "clickhouse"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 50,
+                "minCpu": "200m",
+                "minMemory": "512Mi"
+            }
         }
     ],
     "networking": {
@@ -97,8 +112,8 @@
             "storage": "5Gi"
         },
         "recommended": {
-            "cpu": "0.50",
-            "memory": "512Mi",
+            "cpu": "1.50",
+            "memory": "2Gi",
             "storage": "15Gi"
         }
     },

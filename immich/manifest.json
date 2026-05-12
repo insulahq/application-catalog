@@ -4,7 +4,7 @@
     "type": "application",
     "versionLockMode": "strict",
     "version": "2.6.3",
-    "description": "Back up and browse your photos and videos privately \u2014 a self-hosted Google Photos alternative.",
+    "description": "Back up and browse your photos and videos privately — a self-hosted Google Photos alternative.",
     "url": "https://immich.app",
     "documentation": "https://immich.app/docs/overview/introduction",
     "category": "media",
@@ -25,7 +25,12 @@
             ],
             "volumes": [
                 "uploads"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 40,
+                "minCpu": "200m",
+                "minMemory": "512Mi"
+            }
         },
         {
             "name": "immich-ml",
@@ -40,7 +45,12 @@
             ],
             "volumes": [
                 "ml-cache"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 40,
+                "minCpu": "200m",
+                "minMemory": "512Mi"
+            }
         },
         {
             "name": "postgresql",
@@ -56,7 +66,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 15,
+                "minCpu": "100m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "redis",
@@ -69,7 +84,12 @@
                     "ingress": false
                 }
             ],
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 5,
+                "minCpu": "30m",
+                "minMemory": "64Mi"
+            }
         }
     ],
     "networking": {

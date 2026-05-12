@@ -28,7 +28,12 @@
                 "data",
                 "config",
                 "apps"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 45,
+                "minCpu": "200m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "mariadb",
@@ -43,7 +48,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 30,
+                "minCpu": "100m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "redis",
@@ -57,7 +67,12 @@
                 }
             ],
             "optional": true,
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 5,
+                "minCpu": "30m",
+                "minMemory": "64Mi"
+            }
         },
         {
             "name": "collabora",
@@ -71,7 +86,12 @@
                 }
             ],
             "optional": true,
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "100m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "cron",
@@ -82,7 +102,12 @@
                 "data",
                 "config",
                 "apps"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "50m",
+                "minMemory": "64Mi"
+            }
         }
     ],
     "networking": {
@@ -127,8 +152,8 @@
             "storage": "10Gi"
         },
         "recommended": {
-            "cpu": "1.00",
-            "memory": "1Gi",
+            "cpu": "2.00",
+            "memory": "2Gi",
             "storage": "56Gi"
         }
     },

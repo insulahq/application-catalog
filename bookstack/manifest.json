@@ -25,7 +25,12 @@
             ],
             "volumes": [
                 "config"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 60,
+                "minCpu": "100m",
+                "minMemory": "128Mi"
+            }
         },
         {
             "name": "mariadb",
@@ -40,7 +45,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 40,
+                "minCpu": "100m",
+                "minMemory": "128Mi"
+            }
         }
     ],
     "networking": {
@@ -74,8 +84,8 @@
             "storage": "3Gi"
         },
         "recommended": {
-            "cpu": "0.25",
-            "memory": "256Mi",
+            "cpu": "0.50",
+            "memory": "384Mi",
             "storage": "7Gi"
         }
     },

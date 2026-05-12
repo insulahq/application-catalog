@@ -26,7 +26,12 @@
                 "data",
                 "media",
                 "consume"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 60,
+                "minCpu": "200m",
+                "minMemory": "256Mi"
+            }
         },
         {
             "name": "postgresql",
@@ -46,7 +51,12 @@
             },
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 30,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "redis",
@@ -58,7 +68,12 @@
                     "protocol": "TCP"
                 }
             ],
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "30m",
+                "minMemory": "64Mi"
+            }
         }
     ],
     "networking": {

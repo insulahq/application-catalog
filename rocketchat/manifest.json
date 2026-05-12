@@ -24,7 +24,12 @@
             ],
             "volumes": [
                 "uploads"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 60,
+                "minCpu": "200m",
+                "minMemory": "512Mi"
+            }
         },
         {
             "name": "mongodb",
@@ -44,7 +49,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 40,
+                "minCpu": "200m",
+                "minMemory": "256Mi"
+            }
         }
     ],
     "networking": {

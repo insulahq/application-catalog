@@ -24,7 +24,12 @@
             ],
             "volumes": [
                 "data"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 60,
+                "minCpu": "200m",
+                "minMemory": "512Mi"
+            }
         },
         {
             "name": "postgresql",
@@ -40,7 +45,12 @@
             ],
             "volumes": [
                 "database"
-            ]
+            ],
+            "resourceShare": {
+                "weight": 30,
+                "minCpu": "100m",
+                "minMemory": "192Mi"
+            }
         },
         {
             "name": "redis",
@@ -53,7 +63,12 @@
                     "ingress": false
                 }
             ],
-            "volumes": []
+            "volumes": [],
+            "resourceShare": {
+                "weight": 10,
+                "minCpu": "30m",
+                "minMemory": "64Mi"
+            }
         }
     ],
     "networking": {
