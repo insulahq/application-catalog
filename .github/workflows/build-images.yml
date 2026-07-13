@@ -16,6 +16,8 @@ on:
       - 'apache-php/.dockerignore'
       - 'static-nginx/Dockerfile'
       - 'static-nginx/nginx.conf'
+      - 'static-nginx/worker-entry.go'
+      - 'static-nginx/docroot/**'
       - 'static-nginx/.dockerignore'
       - 'static-apache/Dockerfile'
       - 'static-apache/httpd.conf'
@@ -48,6 +50,8 @@ on:
       - 'apache-php/.dockerignore'
       - 'static-nginx/Dockerfile'
       - 'static-nginx/nginx.conf'
+      - 'static-nginx/worker-entry.go'
+      - 'static-nginx/docroot/**'
       - 'static-nginx/.dockerignore'
       - 'static-apache/Dockerfile'
       - 'static-apache/httpd.conf'
@@ -105,6 +109,8 @@ jobs:
             static-nginx:
               - 'static-nginx/Dockerfile'
               - 'static-nginx/nginx.conf'
+              - 'static-nginx/worker-entry.go'
+              - 'static-nginx/docroot/**'
               - 'static-nginx/.dockerignore'
               - '.github/workflows/build-images.yml'
             static-apache:
