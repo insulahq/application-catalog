@@ -2,7 +2,7 @@
     "name": "Static Website (via NGINX)",
     "code": "static-nginx",
     "type": "static",
-    "version": "1.27",
+    "version": "1.31.2",
     "description": "NGINX serving static HTML/CSS/JS sites",
     "category": "static",
     "min_plan": "starter",
@@ -15,10 +15,10 @@
         {
             "name": "static-nginx",
             "type": "deployment",
-            "image": "ghcr.io/insulahq/application-catalog/static-nginx:1.27",
+            "image": "ghcr.io/insulahq/application-catalog/static-nginx:1.31.2",
             "ports": [
                 {
-                    "port": 80,
+                    "port": 8080,
                     "protocol": "TCP",
                     "ingress": true
                 }
@@ -57,7 +57,7 @@
     "health_check": {
         "path": "/health",
         "command": null,
-        "port": 80,
+        "port": 8080,
         "initial_delay_seconds": 10,
         "period_seconds": 30
     },
