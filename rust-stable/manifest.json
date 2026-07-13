@@ -15,7 +15,7 @@
         {
             "name": "rust-stable",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/rust-stable:1.85",
+            "image": "ghcr.io/insulahq/application-catalog/rust-stable:1.85",
             "ports": [
                 {
                     "port": 8080,

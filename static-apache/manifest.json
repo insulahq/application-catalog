@@ -15,7 +15,7 @@
         {
             "name": "static-apache",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/static-apache:2.4",
+            "image": "ghcr.io/insulahq/application-catalog/static-apache:2.4",
             "ports": [
                 {
                     "port": 80,

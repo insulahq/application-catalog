@@ -1,6 +1,0 @@
-apiVersion: v2
-name: discourse
-description: Managed Discourse community forum with PostgreSQL and Redis
-type: application
-version: 1.0.0
-appVersion: "3"

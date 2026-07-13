@@ -1,7 +1,7 @@
 {
     "name": "k8s-application-catalog",
     "version": "1.0.0",
-    "description": "Unified application catalog for the K8s Hosting Platform — runtimes, databases, services, and managed application stacks.",
+    "description": "Official catalog for the Insula hosting platform \u2014 runtimes, databases, and services.",
     "type": "module",
     "scripts": {
         "validate": "node scripts/validate.mjs",

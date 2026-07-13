@@ -1,4 +1,8 @@
 name: Build & Push Catalog Images
+# NOTE: images publish to ghcr.io/${{ github.repository }}/<image> — i.e.
+# ghcr.io/insulahq/application-catalog/<image>. Editing this workflow is in
+# every path filter below, so a commit here rebuilds & republishes ALL images
+# — the mechanism used to repoint the full set after the phoenixtechnam→insulahq move.
 
 on:
   push:

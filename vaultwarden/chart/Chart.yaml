@@ -1,6 +1,0 @@
-apiVersion: v2
-name: vaultwarden
-description: Managed Vaultwarden password manager (Bitwarden-compatible) with embedded SQLite
-type: application
-version: 1.0.0
-appVersion: "latest"

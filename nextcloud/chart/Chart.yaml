@@ -1,6 +1,0 @@
-apiVersion: v2
-name: nextcloud
-description: Self-hosted file sync, sharing, and collaboration platform with optional Collabora Online document editing
-type: application
-version: 1.0.0
-appVersion: "30"

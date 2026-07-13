@@ -1,2 +1,0 @@
-## PVCs for plausible are managed via StatefulSet volumeClaimTemplates
-## This file is intentionally left as a placeholder for consistency.

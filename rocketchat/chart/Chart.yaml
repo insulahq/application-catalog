@@ -1,6 +1,0 @@
-apiVersion: v2
-name: rocketchat
-description: Managed Rocket.Chat team communication platform with MongoDB
-type: application
-version: 1.0.0
-appVersion: "7"

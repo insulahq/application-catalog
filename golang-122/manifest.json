@@ -15,7 +15,7 @@
         {
             "name": "golang-122",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/golang-122:1.22",
+            "image": "ghcr.io/insulahq/application-catalog/golang-122:1.22",
             "ports": [
                 {
                     "port": 8080,

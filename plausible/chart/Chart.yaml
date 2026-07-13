@@ -1,6 +1,0 @@
-apiVersion: v2
-name: plausible
-description: Privacy-friendly web analytics with PostgreSQL and ClickHouse backends
-type: application
-version: 1.0.0
-appVersion: "2.0"

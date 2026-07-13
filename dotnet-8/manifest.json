@@ -15,7 +15,7 @@
         {
             "name": "dotnet-8",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/dotnet-8:8.0",
+            "image": "ghcr.io/insulahq/application-catalog/dotnet-8:8.0",
             "ports": [
                 {
                     "port": 5000,
