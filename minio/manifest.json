@@ -16,7 +16,13 @@
             "name": "minio",
             "type": "deployment",
             "image": "minio/minio:RELEASE.2025-02-28T09-55-16Z",
-            "command": ["minio", "server", "/data", "--console-address", ":9001"],
+            "command": [
+                "minio",
+                "server",
+                "/data",
+                "--console-address",
+                ":9001"
+            ],
             "ports": [
                 {
                     "port": 9000,

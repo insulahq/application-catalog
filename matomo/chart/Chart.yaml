@@ -1,6 +1,0 @@
-apiVersion: v2
-name: matomo
-description: Managed Matomo web analytics platform with MariaDB
-type: application
-version: 1.0.0
-appVersion: "5"

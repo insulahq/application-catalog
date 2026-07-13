@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/phoenixtechnam/k8s-application-catalog/java-21
+  repository: ghcr.io/insulahq/application-catalog/java-21
   tag: "21"
   pullPolicy: IfNotPresent
 

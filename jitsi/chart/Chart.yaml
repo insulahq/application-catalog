@@ -1,6 +1,0 @@
-apiVersion: v2
-name: jitsi
-description: Open-source video conferencing with WebRTC, screen sharing, and recording
-type: application
-version: 1.0.0
-appVersion: "stable-9823"

@@ -15,7 +15,7 @@
         {
             "name": "java-21",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/java-21:21",
+            "image": "ghcr.io/insulahq/application-catalog/java-21:21",
             "ports": [
                 {
                     "port": 8080,

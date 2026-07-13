@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://github.com/phoenixtechnam/k8s-application-catalog/schema/manifest.schema.json",
+    "$id": "https://github.com/insulahq/application-catalog/schema/manifest.schema.json",
     "title": "Unified Application Manifest",
-    "description": "Schema for all catalog entries — applications, runtimes, databases, and services. Every entry is deployed via a Helm chart.",
+    "description": "Schema for all catalog entries \u2014 applications, runtimes, databases, and services. Every entry is deployed via a Helm chart.",
     "type": "object",
     "required": [
         "name",
@@ -34,13 +34,23 @@
         },
         "type": {
             "type": "string",
-            "description": "Entry type — determines which additional fields are required",
-            "enum": ["application", "runtime", "database", "service", "static"]
+            "description": "Entry type \u2014 determines which additional fields are required",
+            "enum": [
+                "application",
+                "runtime",
+                "database",
+                "service",
+                "static"
+            ]
         },
         "versionLockMode": {
             "type": "string",
             "description": "Upgrade policy enforced by the platform. 'strict' blocks any version change not in the target's upgradeFrom array (Nextcloud, Moodle, WordPress majors). 'advisory' (default) allows admin override via force=true. 'open' disables the guard entirely (stateless services).",
-            "enum": ["strict", "advisory", "open"],
+            "enum": [
+                "strict",
+                "advisory",
+                "open"
+            ],
             "default": "advisory"
         },
         "version": {
@@ -97,7 +107,10 @@
             "description": "Supported tenancy modes",
             "items": {
                 "type": "string",
-                "enum": ["single-tenant", "multi-tenant"]
+                "enum": [
+                    "single-tenant",
+                    "multi-tenant"
+                ]
             },
             "minItems": 1,
             "uniqueItems": true
@@ -105,7 +118,11 @@
         "min_plan": {
             "type": "string",
             "description": "Minimum hosting plan required",
-            "enum": ["starter", "business", "premium"]
+            "enum": [
+                "starter",
+                "business",
+                "premium"
+            ]
         },
         "runtime": {
             "type": "string",
@@ -131,12 +148,29 @@
             ]
         },
         "web_server": {
-            "type": ["string", "null"],
+            "type": [
+                "string",
+                "null"
+            ],
             "description": "Web server used by runtime entries (null for databases/services)",
-            "enum": ["nginx", "apache", "caddy", "gunicorn", "puma", "kestrel", "tomcat", "pm2", "built-in", null]
+            "enum": [
+                "nginx",
+                "apache",
+                "caddy",
+                "gunicorn",
+                "puma",
+                "kestrel",
+                "tomcat",
+                "pm2",
+                "built-in",
+                null
+            ]
         },
         "image": {
-            "type": ["string", "null"],
+            "type": [
+                "string",
+                "null"
+            ],
             "description": "Pre-built container image (null if built from Dockerfile)"
         },
         "has_dockerfile": {
@@ -146,14 +180,21 @@
         "deployment_strategy": {
             "type": "string",
             "description": "Kubernetes workload type for the primary component",
-            "enum": ["deployment", "statefulset"]
+            "enum": [
+                "deployment",
+                "statefulset"
+            ]
         },
         "components": {
             "type": "array",
             "description": "Kubernetes resources this entry deploys",
             "items": {
                 "type": "object",
-                "required": ["name", "type", "image"],
+                "required": [
+                    "name",
+                    "type",
+                    "image"
+                ],
                 "properties": {
                     "name": {
                         "type": "string",
@@ -163,7 +204,12 @@
                     "type": {
                         "type": "string",
                         "description": "Kubernetes resource type",
-                        "enum": ["deployment", "statefulset", "cronjob", "job"]
+                        "enum": [
+                            "deployment",
+                            "statefulset",
+                            "cronjob",
+                            "job"
+                        ]
                     },
                     "image": {
                         "type": "string",
@@ -175,7 +221,10 @@
                         "description": "Ports this component exposes",
                         "items": {
                             "type": "object",
-                            "required": ["port", "protocol"],
+                            "required": [
+                                "port",
+                                "protocol"
+                            ],
                             "properties": {
                                 "port": {
                                     "type": "integer",
@@ -184,7 +233,10 @@
                                 },
                                 "protocol": {
                                     "type": "string",
-                                    "enum": ["TCP", "UDP"]
+                                    "enum": [
+                                        "TCP",
+                                        "UDP"
+                                    ]
                                 },
                                 "ingress": {
                                     "type": "boolean",
@@ -208,12 +260,19 @@
                     "command": {
                         "type": "array",
                         "description": "Container command override (used by job/cronjob components)",
-                        "items": { "type": "string" }
+                        "items": {
+                            "type": "string"
+                        }
                     },
                     "database": {
                         "type": "string",
-                        "description": "Database engine this component provides — enables SQL Manager access",
-                        "enum": ["mariadb", "mysql", "postgresql", "mongodb"]
+                        "description": "Database engine this component provides \u2014 enables SQL Manager access",
+                        "enum": [
+                            "mariadb",
+                            "mysql",
+                            "postgresql",
+                            "mongodb"
+                        ]
                     },
                     "env_vars": {
                         "type": "object",
@@ -221,15 +280,21 @@
                         "properties": {
                             "fixed": {
                                 "type": "object",
-                                "additionalProperties": { "type": "string" }
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
                             },
                             "generated": {
                                 "type": "array",
-                                "items": { "type": "string" }
+                                "items": {
+                                    "type": "string"
+                                }
                             },
                             "configurable": {
                                 "type": "array",
-                                "items": { "type": "string" }
+                                "items": {
+                                    "type": "string"
+                                }
                             }
                         },
                         "additionalProperties": false
@@ -238,24 +303,54 @@
                         "type": "object",
                         "description": "Per-component resource requests/limits override",
                         "properties": {
-                            "cpu": { "type": "string" },
-                            "memory": { "type": "string" },
-                            "storage": { "type": "string" }
+                            "cpu": {
+                                "type": "string"
+                            },
+                            "memory": {
+                                "type": "string"
+                            },
+                            "storage": {
+                                "type": "string"
+                            }
                         },
                         "additionalProperties": false
                     },
                     "volumes": {
                         "type": "array",
                         "description": "Top-level volume keys this component mounts (must match volumes[].local_path)",
-                        "items": { "type": "string" }
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "resourceShare": {
+                        "type": "object",
+                        "description": "Multi-component proportional resource sharing (ADR-037): scheduling weight plus a CPU/memory floor.",
+                        "properties": {
+                            "weight": {
+                                "type": "number"
+                            },
+                            "minCpu": {
+                                "type": "string"
+                            },
+                            "minMemory": {
+                                "type": "string"
+                            }
+                        },
+                        "additionalProperties": false
                     }
                 },
                 "additionalProperties": false,
                 "if": {
-                    "properties": { "type": { "const": "cronjob" } }
+                    "properties": {
+                        "type": {
+                            "const": "cronjob"
+                        }
+                    }
                 },
                 "then": {
-                    "required": ["schedule"]
+                    "required": [
+                        "schedule"
+                    ]
                 }
             },
             "minItems": 1
@@ -263,14 +358,20 @@
         "networking": {
             "type": "object",
             "description": "Network exposure requirements",
-            "required": ["ingress_ports"],
+            "required": [
+                "ingress_ports"
+            ],
             "properties": {
                 "ingress_ports": {
                     "type": "array",
                     "description": "Ports exposed via NGINX Ingress with TLS",
                     "items": {
                         "type": "object",
-                        "required": ["port", "protocol", "tls"],
+                        "required": [
+                            "port",
+                            "protocol",
+                            "tls"
+                        ],
                         "properties": {
                             "port": {
                                 "type": "integer",
@@ -279,7 +380,9 @@
                             },
                             "protocol": {
                                 "type": "string",
-                                "enum": ["TCP"]
+                                "enum": [
+                                    "TCP"
+                                ]
                             },
                             "tls": {
                                 "type": "boolean"
@@ -296,7 +399,12 @@
                     "description": "Ports that require direct host-level exposure",
                     "items": {
                         "type": "object",
-                        "required": ["port", "protocol", "component", "description"],
+                        "required": [
+                            "port",
+                            "protocol",
+                            "component",
+                            "description"
+                        ],
                         "properties": {
                             "port": {
                                 "type": "integer",
@@ -305,7 +413,10 @@
                             },
                             "protocol": {
                                 "type": "string",
-                                "enum": ["TCP", "UDP"]
+                                "enum": [
+                                    "TCP",
+                                    "UDP"
+                                ]
                             },
                             "component": {
                                 "type": "string"
@@ -323,7 +434,9 @@
                             },
                             "remap_range": {
                                 "type": "array",
-                                "items": { "type": "integer" },
+                                "items": {
+                                    "type": "integer"
+                                },
                                 "minItems": 2,
                                 "maxItems": 2
                             },
@@ -352,12 +465,22 @@
                 "tcp": {
                     "type": "array",
                     "description": "TCP ports or 'start-end' ranges",
-                    "items": { "type": ["integer", "string"] }
+                    "items": {
+                        "type": [
+                            "integer",
+                            "string"
+                        ]
+                    }
                 },
                 "udp": {
                     "type": "array",
                     "description": "UDP ports or 'start-end' ranges",
-                    "items": { "type": ["integer", "string"] }
+                    "items": {
+                        "type": [
+                            "integer",
+                            "string"
+                        ]
+                    }
                 }
             },
             "additionalProperties": false
@@ -367,7 +490,10 @@
             "description": "Persistent volumes this entry needs",
             "items": {
                 "type": "object",
-                "required": ["local_path", "container_path"],
+                "required": [
+                    "local_path",
+                    "container_path"
+                ],
                 "properties": {
                     "local_path": {
                         "type": "string",
@@ -391,25 +517,52 @@
         "resources": {
             "type": "object",
             "description": "Resource allocation profiles",
-            "required": ["recommended", "minimum"],
+            "required": [
+                "recommended",
+                "minimum"
+            ],
             "properties": {
                 "recommended": {
                     "type": "object",
-                    "required": ["cpu", "memory"],
+                    "required": [
+                        "cpu",
+                        "memory"
+                    ],
                     "properties": {
-                        "cpu": { "type": "string", "pattern": "^[0-9]+\\.?[0-9]*$" },
-                        "memory": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" },
-                        "storage": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" }
+                        "cpu": {
+                            "type": "string",
+                            "pattern": "^[0-9]+\\.?[0-9]*$"
+                        },
+                        "memory": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(Mi|Gi)$"
+                        },
+                        "storage": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(Mi|Gi)$"
+                        }
                     },
                     "additionalProperties": false
                 },
                 "minimum": {
                     "type": "object",
-                    "required": ["cpu", "memory"],
+                    "required": [
+                        "cpu",
+                        "memory"
+                    ],
                     "properties": {
-                        "cpu": { "type": "string", "pattern": "^[0-9]+\\.?[0-9]*$" },
-                        "memory": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" },
-                        "storage": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" }
+                        "cpu": {
+                            "type": "string",
+                            "pattern": "^[0-9]+\\.?[0-9]*$"
+                        },
+                        "memory": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(Mi|Gi)$"
+                        },
+                        "storage": {
+                            "type": "string",
+                            "pattern": "^[0-9]+(Mi|Gi)$"
+                        }
                     },
                     "additionalProperties": false
                 }
@@ -419,19 +572,33 @@
         "health_check": {
             "type": "object",
             "description": "Primary health check configuration",
-            "required": ["initial_delay_seconds", "period_seconds"],
+            "required": [
+                "initial_delay_seconds",
+                "period_seconds"
+            ],
             "properties": {
                 "path": {
-                    "type": ["string", "null"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "description": "HTTP GET path for health check"
                 },
                 "command": {
-                    "type": ["array", "null"],
+                    "type": [
+                        "array",
+                        "null"
+                    ],
                     "description": "Exec command for health check",
-                    "items": { "type": "string" }
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "port": {
-                    "type": ["integer", "null"],
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
                     "minimum": 1,
                     "maximum": 65535
                 },
@@ -453,7 +620,11 @@
             "description": "Admin/client-configurable parameters, passed as Helm values",
             "items": {
                 "type": "object",
-                "required": ["key", "label", "type"],
+                "required": [
+                    "key",
+                    "label",
+                    "type"
+                ],
                 "properties": {
                     "key": {
                         "type": "string",
@@ -464,7 +635,13 @@
                     },
                     "type": {
                         "type": "string",
-                        "enum": ["string", "secret", "boolean", "integer", "string[]"]
+                        "enum": [
+                            "string",
+                            "secret",
+                            "boolean",
+                            "integer",
+                            "string[]"
+                        ]
                     },
                     "default": {
                         "description": "Default value"
@@ -500,17 +677,35 @@
             "properties": {
                 "database": {
                     "type": "object",
-                    "required": ["required", "engines", "env_mapping"],
+                    "required": [
+                        "required",
+                        "engines",
+                        "env_mapping"
+                    ],
                     "properties": {
-                        "required": { "type": "boolean" },
+                        "required": {
+                            "type": "boolean"
+                        },
                         "engines": {
                             "type": "array",
                             "items": {
                                 "type": "object",
-                                "required": ["type", "min_version"],
+                                "required": [
+                                    "type",
+                                    "min_version"
+                                ],
                                 "properties": {
-                                    "type": { "type": "string", "enum": ["mariadb", "mysql", "postgresql"] },
-                                    "min_version": { "type": "string" }
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "mariadb",
+                                            "mysql",
+                                            "postgresql"
+                                        ]
+                                    },
+                                    "min_version": {
+                                        "type": "string"
+                                    }
                                 },
                                 "additionalProperties": false
                             },
@@ -519,13 +714,27 @@
                         "env_mapping": {
                             "type": "object",
                             "properties": {
-                                "host": { "type": "string" },
-                                "port": { "type": "string" },
-                                "name": { "type": "string" },
-                                "user": { "type": "string" },
-                                "password": { "type": "string" },
-                                "type": { "type": "string" },
-                                "url": { "type": "string" }
+                                "host": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "user": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false,
                             "minProperties": 1
@@ -535,17 +744,32 @@
                 },
                 "redis": {
                     "type": "object",
-                    "required": ["required", "env_mapping"],
+                    "required": [
+                        "required",
+                        "env_mapping"
+                    ],
                     "properties": {
-                        "required": { "type": "boolean" },
-                        "min_version": { "type": "string" },
+                        "required": {
+                            "type": "boolean"
+                        },
+                        "min_version": {
+                            "type": "string"
+                        },
                         "env_mapping": {
                             "type": "object",
                             "properties": {
-                                "host": { "type": "string" },
-                                "port": { "type": "string" },
-                                "url": { "type": "string" },
-                                "password": { "type": "string" }
+                                "host": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": "string"
+                                },
+                                "url": {
+                                    "type": "string"
+                                },
+                                "password": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false,
                             "minProperties": 1
@@ -562,21 +786,60 @@
             "properties": {
                 "database": {
                     "type": "object",
-                    "required": ["engine", "version", "protocol", "port", "credentials"],
+                    "required": [
+                        "engine",
+                        "version",
+                        "protocol",
+                        "port",
+                        "credentials"
+                    ],
                     "properties": {
-                        "engine": { "type": "string", "enum": ["mariadb", "mysql", "postgresql", "mongodb"] },
-                        "version": { "type": "string" },
-                        "protocol": { "type": "string", "enum": ["mysql", "postgresql", "mongodb"] },
-                        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                        "engine": {
+                            "type": "string",
+                            "enum": [
+                                "mariadb",
+                                "mysql",
+                                "postgresql",
+                                "mongodb"
+                            ]
+                        },
+                        "version": {
+                            "type": "string"
+                        },
+                        "protocol": {
+                            "type": "string",
+                            "enum": [
+                                "mysql",
+                                "postgresql",
+                                "mongodb"
+                            ]
+                        },
+                        "port": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                        },
                         "credentials": {
                             "type": "object",
-                            "required": ["root_env"],
+                            "required": [
+                                "root_env"
+                            ],
                             "properties": {
-                                "root_env": { "type": "string" },
-                                "username_env": { "type": "string" },
-                                "user_env": { "type": "string" },
-                                "password_env": { "type": "string" },
-                                "database_env": { "type": "string" }
+                                "root_env": {
+                                    "type": "string"
+                                },
+                                "username_env": {
+                                    "type": "string"
+                                },
+                                "user_env": {
+                                    "type": "string"
+                                },
+                                "password_env": {
+                                    "type": "string"
+                                },
+                                "database_env": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false
                         }
@@ -585,38 +848,87 @@
                 },
                 "redis": {
                     "type": "object",
-                    "required": ["version", "protocol", "port"],
+                    "required": [
+                        "version",
+                        "protocol",
+                        "port"
+                    ],
                     "properties": {
-                        "version": { "type": "string" },
-                        "protocol": { "type": "string", "enum": ["redis"] },
-                        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+                        "version": {
+                            "type": "string"
+                        },
+                        "protocol": {
+                            "type": "string",
+                            "enum": [
+                                "redis"
+                            ]
+                        },
+                        "port": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                        }
                     },
                     "additionalProperties": false
                 },
                 "cache": {
                     "type": "object",
-                    "required": ["engine", "protocol", "port"],
+                    "required": [
+                        "engine",
+                        "protocol",
+                        "port"
+                    ],
                     "properties": {
-                        "engine": { "type": "string" },
-                        "version": { "type": "string" },
-                        "protocol": { "type": "string" },
-                        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+                        "engine": {
+                            "type": "string"
+                        },
+                        "version": {
+                            "type": "string"
+                        },
+                        "protocol": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                        }
                     },
                     "additionalProperties": false
                 },
                 "object_storage": {
                     "type": "object",
-                    "required": ["engine", "protocol", "port"],
+                    "required": [
+                        "engine",
+                        "protocol",
+                        "port"
+                    ],
                     "properties": {
-                        "engine": { "type": "string" },
-                        "protocol": { "type": "string" },
-                        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-                        "console_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                        "engine": {
+                            "type": "string"
+                        },
+                        "protocol": {
+                            "type": "string"
+                        },
+                        "port": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                        },
+                        "console_port": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 65535
+                        },
                         "credentials": {
                             "type": "object",
                             "properties": {
-                                "access_key_env": { "type": "string" },
-                                "secret_key_env": { "type": "string" }
+                                "access_key_env": {
+                                    "type": "string"
+                                },
+                                "secret_key_env": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false
                         }
@@ -632,15 +944,21 @@
             "properties": {
                 "configurable": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "generated": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "fixed": {
                     "type": "object",
-                    "additionalProperties": { "type": "string" }
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             },
             "additionalProperties": false
@@ -650,17 +968,30 @@
             "description": "Multiple supported versions with upgrade paths and EOL tracking",
             "items": {
                 "type": "object",
-                "required": ["version", "components"],
+                "required": [
+                    "version",
+                    "components"
+                ],
                 "properties": {
-                    "version": { "type": "string", "minLength": 1 },
+                    "version": {
+                        "type": "string",
+                        "minLength": 1
+                    },
                     "components": {
                         "type": "array",
                         "items": {
                             "type": "object",
-                            "required": ["name", "image"],
+                            "required": [
+                                "name",
+                                "image"
+                            ],
                             "properties": {
-                                "name": { "type": "string" },
-                                "image": { "type": "string" }
+                                "name": {
+                                    "type": "string"
+                                },
+                                "image": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false
                         },
@@ -668,36 +999,71 @@
                     },
                     "upgradeFrom": {
                         "type": "array",
-                        "items": { "type": "string" },
+                        "items": {
+                            "type": "string"
+                        },
                         "uniqueItems": true
                     },
-                    "eolDate": { "type": "string", "format": "date" },
-                    "breakingChanges": { "type": "string" },
+                    "eolDate": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "breakingChanges": {
+                        "type": "string"
+                    },
                     "envChanges": {
                         "type": "array",
                         "items": {
                             "type": "object",
-                            "required": ["key", "action"],
+                            "required": [
+                                "key",
+                                "action"
+                            ],
                             "properties": {
-                                "key": { "type": "string" },
-                                "action": { "type": "string", "enum": ["add", "remove", "rename"] },
-                                "oldKey": { "type": "string" },
+                                "key": {
+                                    "type": "string"
+                                },
+                                "action": {
+                                    "type": "string",
+                                    "enum": [
+                                        "add",
+                                        "remove",
+                                        "rename"
+                                    ]
+                                },
+                                "oldKey": {
+                                    "type": "string"
+                                },
                                 "default": {}
                             },
                             "additionalProperties": false
                         }
                     },
-                    "migrationNotes": { "type": "string" },
+                    "migrationNotes": {
+                        "type": "string"
+                    },
                     "minResources": {
                         "type": "object",
                         "properties": {
-                            "cpu": { "type": "string", "pattern": "^[0-9]+\\.?[0-9]*$" },
-                            "memory": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" },
-                            "storage": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" }
+                            "cpu": {
+                                "type": "string",
+                                "pattern": "^[0-9]+\\.?[0-9]*$"
+                            },
+                            "memory": {
+                                "type": "string",
+                                "pattern": "^[0-9]+(Mi|Gi)$"
+                            },
+                            "storage": {
+                                "type": "string",
+                                "pattern": "^[0-9]+(Mi|Gi)$"
+                            }
                         },
                         "additionalProperties": false
                     },
-                    "isDefault": { "type": "boolean", "default": false },
+                    "isDefault": {
+                        "type": "boolean",
+                        "default": false
+                    },
                     "resources": {
                         "type": "object",
                         "description": "Version-specific resource overrides (merged with base resources)",
@@ -705,25 +1071,44 @@
                             "recommended": {
                                 "type": "object",
                                 "properties": {
-                                    "cpu": { "type": "string" },
-                                    "memory": { "type": "string" },
-                                    "storage": { "type": "string" }
+                                    "cpu": {
+                                        "type": "string"
+                                    },
+                                    "memory": {
+                                        "type": "string"
+                                    },
+                                    "storage": {
+                                        "type": "string"
+                                    }
                                 },
                                 "additionalProperties": false
                             },
                             "minimum": {
                                 "type": "object",
                                 "properties": {
-                                    "cpu": { "type": "string" },
-                                    "memory": { "type": "string" },
-                                    "storage": { "type": "string" }
+                                    "cpu": {
+                                        "type": "string"
+                                    },
+                                    "memory": {
+                                        "type": "string"
+                                    },
+                                    "storage": {
+                                        "type": "string"
+                                    }
                                 },
                                 "additionalProperties": false
                             }
                         },
                         "additionalProperties": false
                     },
-                    "minPlan": { "type": "string", "enum": ["starter", "business", "premium"] },
+                    "minPlan": {
+                        "type": "string",
+                        "enum": [
+                            "starter",
+                            "business",
+                            "premium"
+                        ]
+                    },
                     "provides": {
                         "type": "object",
                         "description": "Version-specific provider overrides"
@@ -731,18 +1116,30 @@
                     "tags": {
                         "type": "array",
                         "description": "Additional tags for this specific version",
-                        "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+                        "items": {
+                            "type": "string",
+                            "pattern": "^[a-z0-9-]+$"
+                        }
                     },
                     "volumes": {
                         "type": "array",
                         "description": "Version-specific volume configuration. If present, REPLACES the top-level volumes for this version. Use when different versions require different container mount paths (e.g., PostgreSQL 18+ changed the default data directory convention).",
                         "items": {
                             "type": "object",
-                            "required": ["local_path", "container_path"],
+                            "required": [
+                                "local_path",
+                                "container_path"
+                            ],
                             "properties": {
-                                "local_path": { "type": "string" },
-                                "container_path": { "type": "string" },
-                                "description": { "type": "string" }
+                                "local_path": {
+                                    "type": "string"
+                                },
+                                "container_path": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
                             },
                             "additionalProperties": false
                         }
@@ -754,12 +1151,16 @@
                             "fixed": {
                                 "type": "object",
                                 "description": "Version-specific fixed env vars. Merged with entry-level fixed env vars; version-level wins on conflict.",
-                                "additionalProperties": { "type": "string" }
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
                             },
                             "configurable": {
                                 "type": "array",
                                 "description": "Version-specific configurable env var names. If present, replaces the entry-level configurable list.",
-                                "items": { "type": "string" }
+                                "items": {
+                                    "type": "string"
+                                }
                             }
                         },
                         "additionalProperties": false
@@ -772,50 +1173,103 @@
     "allOf": [
         {
             "if": {
-                "properties": { "type": { "const": "application" } }
+                "properties": {
+                    "type": {
+                        "const": "application"
+                    }
+                }
             },
             "then": {
-                "required": ["category", "tenancy"]
+                "required": [
+                    "category",
+                    "tenancy"
+                ]
             }
         },
         {
             "if": {
-                "properties": { "type": { "const": "runtime" } }
+                "properties": {
+                    "type": {
+                        "const": "runtime"
+                    }
+                }
             },
             "then": {
-                "required": ["runtime", "web_server", "has_dockerfile", "min_plan", "deployment_strategy"],
+                "required": [
+                    "runtime",
+                    "web_server",
+                    "has_dockerfile",
+                    "min_plan",
+                    "deployment_strategy"
+                ],
                 "properties": {
-                    "deployment_strategy": { "const": "deployment" }
+                    "deployment_strategy": {
+                        "const": "deployment"
+                    }
                 }
             }
         },
         {
             "if": {
-                "properties": { "type": { "const": "database" } }
+                "properties": {
+                    "type": {
+                        "const": "database"
+                    }
+                }
             },
             "then": {
-                "required": ["runtime", "has_dockerfile", "min_plan", "deployment_strategy", "provides"],
+                "required": [
+                    "runtime",
+                    "has_dockerfile",
+                    "min_plan",
+                    "deployment_strategy",
+                    "provides"
+                ],
                 "properties": {
-                    "deployment_strategy": { "const": "deployment" }
+                    "deployment_strategy": {
+                        "const": "deployment"
+                    }
                 }
             }
         },
         {
             "if": {
-                "properties": { "type": { "const": "service" } }
+                "properties": {
+                    "type": {
+                        "const": "service"
+                    }
+                }
             },
             "then": {
-                "required": ["runtime", "has_dockerfile", "min_plan", "deployment_strategy", "provides"]
+                "required": [
+                    "runtime",
+                    "has_dockerfile",
+                    "min_plan",
+                    "deployment_strategy",
+                    "provides"
+                ]
             }
         },
         {
             "if": {
-                "properties": { "type": { "const": "static" } }
+                "properties": {
+                    "type": {
+                        "const": "static"
+                    }
+                }
             },
             "then": {
-                "required": ["runtime", "web_server", "has_dockerfile", "min_plan", "deployment_strategy"],
+                "required": [
+                    "runtime",
+                    "web_server",
+                    "has_dockerfile",
+                    "min_plan",
+                    "deployment_strategy"
+                ],
                 "properties": {
-                    "deployment_strategy": { "const": "deployment" }
+                    "deployment_strategy": {
+                        "const": "deployment"
+                    }
                 }
             }
         }

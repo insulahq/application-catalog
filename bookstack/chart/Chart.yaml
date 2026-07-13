@@ -1,6 +1,0 @@
-apiVersion: v2
-name: bookstack
-description: Managed BookStack documentation and wiki platform with MariaDB
-type: application
-version: 1.0.0
-appVersion: "latest"

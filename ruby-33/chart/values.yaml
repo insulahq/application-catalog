@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/phoenixtechnam/k8s-application-catalog/ruby-33
+  repository: ghcr.io/insulahq/application-catalog/ruby-33
   tag: "3.3"
   pullPolicy: IfNotPresent
 

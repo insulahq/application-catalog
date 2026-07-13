@@ -1,6 +1,0 @@
-apiVersion: v2
-name: dolibarr
-description: Managed Dolibarr ERP/CRM with MariaDB
-type: application
-version: 1.0.0
-appVersion: "20.0.2"

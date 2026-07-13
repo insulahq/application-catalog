@@ -15,7 +15,7 @@
         {
             "name": "nodejs",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/nodejs:22",
+            "image": "ghcr.io/insulahq/application-catalog/nodejs:22",
             "ports": [
                 {
                     "port": 3000,
@@ -120,7 +120,7 @@
             "components": [
                 {
                     "name": "nodejs",
-                    "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/nodejs:20"
+                    "image": "ghcr.io/insulahq/application-catalog/nodejs:20"
                 }
             ]
         },
@@ -133,7 +133,7 @@
             "components": [
                 {
                     "name": "nodejs",
-                    "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/nodejs:22"
+                    "image": "ghcr.io/insulahq/application-catalog/nodejs:22"
                 }
             ]
         }

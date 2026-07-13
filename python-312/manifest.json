@@ -15,7 +15,7 @@
         {
             "name": "python-312",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/python-312:3.12",
+            "image": "ghcr.io/insulahq/application-catalog/python-312:3.12",
             "ports": [
                 {
                     "port": 8000,

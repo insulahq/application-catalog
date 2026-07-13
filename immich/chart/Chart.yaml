@@ -1,6 +1,0 @@
-apiVersion: v2
-name: immich
-description: Managed Immich self-hosted photo and video management with machine learning
-type: application
-version: 1.0.0
-appVersion: "release"

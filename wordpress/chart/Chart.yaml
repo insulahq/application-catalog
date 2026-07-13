@@ -1,6 +1,0 @@
-apiVersion: v2
-name: wordpress
-description: Managed WordPress CMS with MariaDB, Redis object cache, and scheduled maintenance
-type: application
-version: 1.0.0
-appVersion: "6.7"

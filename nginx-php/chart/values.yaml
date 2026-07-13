@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/phoenixtechnam/k8s-application-catalog/nginx-php
+  repository: ghcr.io/insulahq/application-catalog/nginx-php
   tag: "8.4"
   pullPolicy: IfNotPresent
 

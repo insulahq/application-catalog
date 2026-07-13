@@ -8,14 +8,14 @@
     "min_plan": "starter",
     "runtime": "bun",
     "web_server": "built-in",
-    "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/bun-latest:1.2",
+    "image": "ghcr.io/insulahq/application-catalog/bun-latest:1.2",
     "has_dockerfile": true,
     "deployment_strategy": "deployment",
     "components": [
         {
             "name": "bun-latest",
             "type": "deployment",
-            "image": "ghcr.io/phoenixtechnam/k8s-application-catalog/bun-latest:1.2",
+            "image": "ghcr.io/insulahq/application-catalog/bun-latest:1.2",
             "ports": [
                 {
                     "port": 3000,
