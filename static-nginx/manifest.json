@@ -61,14 +61,26 @@
         "initial_delay_seconds": 10,
         "period_seconds": 30
     },
-    "parameters": [],
+    "parameters": [
+        {
+            "key": "NGINX_CONF_DIR",
+            "label": "Custom NGINX config folder",
+            "type": "string",
+            "default": "",
+            "required": false,
+            "advanced": true,
+            "description": "Optional. Absolute path to a folder for your own *.conf files, e.g. /var/www/html/.nginx-conf . When set, the folder is created (with a README) if missing, its *.conf are loaded into the server block, and it is never web-served. Leave blank to use the default config."
+        }
+    ],
     "tags": [
         "static",
         "nginx",
         "html"
     ],
     "env_vars": {
-        "configurable": [],
+        "configurable": [
+            "NGINX_CONF_DIR"
+        ],
         "fixed": {}
     }
 }
