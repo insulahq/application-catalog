@@ -7,6 +7,13 @@ WORKDIR /app
 
 USER node
 
+# Real client IP: this runtime executes YOUR server.js, so recovering the
+# visitor's IP is app-side — the platform's Traefik ingress forwards it in
+# X-Forwarded-For / X-Real-IP, but your app's socket peer is the Traefik pod
+# (k3s pod CIDR 10.42.0.0/16). Configure your framework to trust the proxy:
+#   Express/Koa:  app.set('trust proxy', '10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16')
+#   Fastify:      { trustProxy: '10.0.0.0/8' }   // or true
+# then read req.ip. Also trust your external LB's CIDR if one fronts the cluster.
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
