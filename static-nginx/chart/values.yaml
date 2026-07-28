@@ -18,10 +18,10 @@ ingress:
 resources:
   requests:
     cpu: 0.10
-    memory: 64Mi
+    memory: 32Mi
   limits:
     cpu: 0.10
-    memory: 64Mi
+    memory: 32Mi
 
 persistence:
   enabled: true

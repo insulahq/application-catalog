@@ -1,6 +1,6 @@
 {
     "name": "Static Website (via NGINX)",
-    "code": "static-nginx",
+    "code": "nginx",
     "type": "static",
     "version": "1.31.2",
     "description": "NGINX serving static HTML/CSS/JS sites",
@@ -47,11 +47,11 @@
     "resources": {
         "minimum": {
             "cpu": "0.10",
-            "memory": "64Mi"
+            "memory": "32Mi"
         },
         "recommended": {
             "cpu": "0.10",
-            "memory": "64Mi"
+            "memory": "32Mi"
         }
     },
     "health_check": {

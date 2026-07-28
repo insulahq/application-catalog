@@ -1,6 +1,6 @@
 {
     "name": "Static Website (via Apache)",
-    "code": "static-apache",
+    "code": "apache",
     "type": "static",
     "version": "2.4",
     "description": "Apache HTTP Server serving static HTML/CSS/JS sites",
@@ -61,14 +61,26 @@
         "initial_delay_seconds": 10,
         "period_seconds": 30
     },
-    "parameters": [],
+    "parameters": [
+        {
+            "key": "APACHE_CONF_DIR",
+            "label": "Custom Apache config folder",
+            "type": "string",
+            "default": "",
+            "required": false,
+            "advanced": true,
+            "description": "Optional. Absolute path to a folder for your own *.conf files, e.g. /usr/local/apache2/htdocs/.apache-conf . When set, the folder is created (with a README) if missing, its *.conf are loaded into the main server config, and it is never web-served. Leave blank to use the default config."
+        }
+    ],
     "tags": [
         "static",
         "apache",
         "html"
     ],
     "env_vars": {
-        "configurable": [],
+        "configurable": [
+            "APACHE_CONF_DIR"
+        ],
         "fixed": {}
     }
 }
