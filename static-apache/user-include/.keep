@@ -1,0 +1,4 @@
+# Placeholder so this directory exists in the image.
+# When APACHE_CONF_DIR is set, the entrypoint writes 00-user-config.conf here;
+# httpd.conf does `IncludeOptional conf/user-include/*.conf` (this .keep is not
+# a .conf file, so it is ignored). Empty otherwise -> default config.

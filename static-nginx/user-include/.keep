@@ -1,0 +1,4 @@
+# Placeholder so this directory exists in the (distroless, shell-less) image.
+# When NGINX_CONF_DIR is set, the entrypoint writes 00-user-config.conf here;
+# nginx.default.conf does `include /etc/nginx/user-include/*.conf;` (this .keep
+# is not a .conf file, so it is ignored). Empty otherwise -> default config.
