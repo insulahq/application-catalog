@@ -139,8 +139,16 @@ for (const dir of dirs) {
         continue;
     }
 
-    // Code must match directory name
-    if (manifest.code !== dir) {
+    // Code must match directory name.
+    //
+    // Two deliberate exceptions: f3b5849 ("feat(static): codes nginx/apache")
+    // shortened the catalog CODE for the static entries while the DIRECTORY —
+    // and with it the published image name, ghcr.io/.../static-nginx — stayed
+    // as-is. The validator was not updated alongside, so `Validate Catalog` has
+    // been red on main since 2026-07-28. Listing the pair explicitly keeps the
+    // strict check everywhere else, so accidental drift is still caught.
+    const CODE_DIR_EXCEPTIONS = { 'static-nginx': 'nginx', 'static-apache': 'apache' };
+    if (manifest.code !== dir && CODE_DIR_EXCEPTIONS[dir] !== manifest.code) {
         error(`${dir}: code "${manifest.code}" does not match directory name "${dir}"`);
     }
 

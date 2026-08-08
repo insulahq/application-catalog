@@ -26,6 +26,15 @@ jobs:
       - name: Validate manifests and charts
         run: npm run validate
 
+      - name: Web images must resolve the real client IP
+        # Without real-IP handling every visitor is logged as the platform's
+        # Traefik pod address and PHP sees it as REMOTE_ADDR, so tenant
+        # rate-limiting, geo-logic and abuse blocking see one client for the
+        # whole internet. Also pins that a forged X-Forwarded-For prefix cannot
+        # displace the true client, and that static-apache's access log is
+        # actually formatted. Runs the shipped configs under real nginx/httpd/php-fpm.
+        run: ./scripts/test-real-client-ip.sh
+
       - name: Install Helm
         uses: azure/setup-helm@v4
 

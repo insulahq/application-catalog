@@ -45,6 +45,15 @@ Buildable runtime/static images publish to **`ghcr.io/insulahq/application-catal
 `.github/workflows/build-images.yml` (tags: `<git-sha>`, `<chart-tag>`, `latest`). Databases and
 services reference upstream public images directly.
 
+## Real client IP
+
+Workloads are reached through the platform's Traefik pod, so the TCP peer is a
+pod address and the visitor's address (v4 or v6) arrives in `X-Forwarded-For`.
+The web-serving images resolve it for you; the runtime images run *your*
+program, so your framework has to trust the header. Per-runtime guidance and the
+reasoning — including why gunicorn's `--forwarded-allow-ips` is **not** the
+answer — are in [REAL_CLIENT_IP.md](REAL_CLIENT_IP.md).
+
 ## Validate
 
 ```bash
