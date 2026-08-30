@@ -32,7 +32,7 @@ command -v docker >/dev/null 2>&1 || { echo "SKIP (77): docker not available"; e
 # different mount namespace than this shell (DinD): stage under the repo, not
 # /tmp, or the mount silently becomes an empty directory.
 WORK="$ROOT/.realip-test.$$"
-CLEAN=(ripn-$$ ripa-$$ ripnphp-$$ ripfpm-$$)
+CLEAN=(ripn-$$ ripa-$$)
 cleanup() { docker rm -f "${CLEAN[@]}" >/dev/null 2>&1 || true; rm -rf "$WORK"; }
 trap cleanup EXIT
 mkdir -p "$WORK"
@@ -78,20 +78,13 @@ chk "IPv6 client"           "2001:db8::1" "$(sed -n 3p <<<"$AL" | awk '{print $1
 grep -q 'via=' <<<"$AL" && printf '  ✓ %-44s %s\n' "delivering proxy still logged" "$(grep -o 'via=[^ ]*' <<<"$AL" | head -1)" \
   || { printf '  ✗ %-44s\n' "delivering proxy still logged"; fails=$((fails+1)); }
 
-echo "── nginx-php (PHP \$_SERVER['REMOTE_ADDR']) ──"
-echo '<?php echo $_SERVER["REMOTE_ADDR"];' > "$WORK/ip.php"; chmod -R 755 "$WORK"
-docker run -d --name "ripfpm-$$" -v "$WORK:/var/www/html" php:8.4-fpm-alpine >/dev/null
-sleep 3; F=$(ipof "ripfpm-$$")
-# Only the fastcgi upstream is rewritten (the shipped config points at the
-# same-pod 127.0.0.1); everything else is the file as shipped.
-sed "s#fastcgi_pass 127.0.0.1:9000;#fastcgi_pass ${F}:9000;#" "$ROOT/nginx-php/nginx.conf" > "$WORK/nginx.conf"
-docker run -d --name "ripnphp-$$" -v "$WORK/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
-  -v "$WORK:/var/www/html" nginx:alpine >/dev/null
-sleep 3; NP=$(ipof "ripnphp-$$")
-chk "single XFF"            "203.0.113.7" "$(hit -H 'X-Forwarded-For: 203.0.113.7'          "http://$NP/ip.php")"
-chk "forged prefix ignored" "203.0.113.8" "$(hit -H 'X-Forwarded-For: 9.9.9.9, 203.0.113.8' "http://$NP/ip.php")"
-chk "IPv6 client"           "2001:db8::1" "$(hit -H 'X-Forwarded-For: 2001:db8::1'          "http://$NP/ip.php")"
-
+# The PHP runtimes (apache-php / nginx-php) are NOT tested here any more.
+# They no longer ship a standalone config file to mount — the real-IP handling
+# now lives inside the built image (an appended vhost include for Apache, a
+# rewritten real_ip_header for NGINX). Testing a config file we no longer ship
+# would prove nothing about the artefact, so the equivalent assertions run in
+# .github/workflows/build-images.yml against the actual built image, right
+# after the extension check. See the "Assert real client IP" step there.
 echo
 if (( fails > 0 )); then echo "❌ test-real-client-ip: $fails case(s) failed" >&2; exit 1; fi
 echo "✅ test-real-client-ip: images resolve the true client address and reject forged X-Forwarded-For."
