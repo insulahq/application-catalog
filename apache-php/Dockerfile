@@ -57,4 +57,31 @@ RUN for tpl in http https; do \
         >> "/etc/apache2/vhost-templates/${tpl}.conf"; \
     done
 
+# ── Platform defaults ────────────────────────────────────────────────────────
+# These override the base image's own ENV so a tenant who configures nothing
+# still gets a lean, production-shaped runtime. Every one of them is listed in
+# the manifest's env_vars.configurable, so a tenant CAN raise them — which only
+# works because they are set here rather than in env_vars.fixed: the deployer
+# resolves fixed first and skips any key already set (k8s-deployer buildEnv
+# pass 2), so a "fixed" value silently wins over the tenant's.
+#
+#   APACHE_DOCUMENT_ROOT=/var/www/html
+#       The base image defaults to a Laravel-style .../public. The platform
+#       mounts the tenant's document root at /var/www/html.
+#   PHP_OPCACHE_ENABLE=1
+#       Off in the base image; the platform has always wanted it on.
+#   PHP_OPCACHE_MEMORY_CONSUMPTION=64   (base: 128)
+#       MB of shared memory claimed at startup. 64 is ample for a typical site
+#       and halves the claim inside a 128-256Mi container.
+#   PHP_FPM_PM_MAX_CHILDREN=5           (base: 20)
+#       The single biggest memory lever here. Each worker may grow to
+#       PHP_MEMORY_LIMIT, so 20 x 256M is far beyond any tenant container.
+#   PHP_FPM_PM_MAX_REQUESTS=500         (base: 0 = never recycle)
+#       Recycling workers bounds leaks in long-lived PHP processes.
+ENV APACHE_DOCUMENT_ROOT=/var/www/html \
+    PHP_FPM_PM_MAX_CHILDREN=5 \
+    PHP_FPM_PM_MAX_REQUESTS=500 \
+    PHP_OPCACHE_ENABLE=1 \
+    PHP_OPCACHE_MEMORY_CONSUMPTION=64
+
 USER www-data
