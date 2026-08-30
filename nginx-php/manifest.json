@@ -3,19 +3,19 @@
     "code": "nginx-php",
     "type": "runtime",
     "version": "8.4",
-    "description": "NGINX web server with PHP-FPM for modern PHP applications (serversideup/php)",
+    "description": "NGINX web server with PHP-FPM for modern PHP applications. Ships gd, imagick, imap, intl, soap, ldap, bcmath, gmp, exif, xsl, mysqli, pgsql, memcached, apcu and redis.",
     "category": "runtime",
     "min_plan": "starter",
     "runtime": "php",
     "web_server": "nginx",
-    "image": "serversideup/php:8.4-fpm-nginx-alpine",
-    "has_dockerfile": false,
+    "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.4",
+    "has_dockerfile": true,
     "deployment_strategy": "deployment",
     "components": [
         {
             "name": "nginx-php",
             "type": "deployment",
-            "image": "serversideup/php:8.4-fpm-nginx-alpine",
+            "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.4",
             "ports": [
                 {
                     "port": 8080,
@@ -164,7 +164,7 @@
             "components": [
                 {
                     "name": "nginx-php",
-                    "image": "serversideup/php:8.3-fpm-nginx-alpine"
+                    "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.3"
                 }
             ]
         },
@@ -177,7 +177,7 @@
             "components": [
                 {
                     "name": "nginx-php",
-                    "image": "serversideup/php:8.4-fpm-nginx-alpine"
+                    "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.4"
                 }
             ]
         },
@@ -190,7 +190,7 @@
             "components": [
                 {
                     "name": "nginx-php",
-                    "image": "serversideup/php:8.5-fpm-nginx-alpine"
+                    "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.5"
                 }
             ]
         }

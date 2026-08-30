@@ -45,6 +45,20 @@ Buildable runtime/static images publish to **`ghcr.io/insulahq/application-catal
 `.github/workflows/build-images.yml` (tags: `<git-sha>`, `<chart-tag>`, `latest`). Databases and
 services reference upstream public images directly.
 
+The two PHP runtimes are built once per supported PHP version, so their tags are
+`8.3` / `8.4` / `8.5` (immutable form: `<php>-<git-sha>`), with `latest` tracking
+the manifest's `isDefault` version. They are built `FROM serversideup/php`, which
+keeps the `PHP_*` tuning knobs, the non-root runtime, port 8080 and `/healthcheck`
+that the manifests depend on, and add the extension set real applications need —
+gd, imagick, imap, intl, soap, ldap, bcmath, gmp, exif, xsl, mysqli, pgsql,
+memcached and apcu among them.
+
+The authoritative list is **`scripts/required-php-extensions.txt`**, asserted
+against `php -m` of every built image by `scripts/check-php-extensions.sh` before
+it is pushed. Add an extension to both Dockerfiles *and* that list. Because we
+build these ourselves we also own their base-image patch cadence — a weekly
+scheduled run rebuilds them.
+
 ## Real client IP
 
 Workloads are reached through the platform's Traefik pod, so the TCP peer is a
