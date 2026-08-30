@@ -1,42 +1,52 @@
-FROM php:8.4-fpm-alpine AS base
+# NGINX + PHP-FPM runtime for the Insula platform.
+#
+# Based on serversideup/php for the same reasons as apache-php: their
+# entrypoint implements the PHP_*/NGINX_* knobs the catalog manifest exposes,
+# the non-root runtime, port 8080 and /healthcheck. See apache-php/Dockerfile
+# for the full rationale.
+#
+# Note the alpine base ships an even leaner extension set than the Debian
+# one — it has no mysqli at all, only pdo_mysql, which breaks WordPress and
+# most legacy PHP outright.
+ARG PHP_VERSION=8.4
+FROM serversideup/php:${PHP_VERSION}-fpm-nginx-alpine
 
-RUN apk add --no-cache \
-    nginx \
-    supervisor \
-    curl \
-    zip unzip \
-    libpng-dev libjpeg-turbo-dev freetype-dev \
-    icu-dev \
-    libzip-dev \
-  && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install -j$(nproc) \
-    gd pdo_mysql mysqli intl zip opcache bcmath \
-  && rm -rf /var/cache/apk/*
+USER root
 
-# Non-root user for PHP-FPM
-RUN adduser -D -u 1000 webuser
+# Extensions — keep in sync with apache-php/Dockerfile and
+# scripts/required-php-extensions.txt (asserted by CI).
+RUN install-php-extensions \
+      apcu \
+      bcmath \
+      bz2 \
+      calendar \
+      exif \
+      ftp \
+      gd \
+      gettext \
+      gmp \
+      imagick \
+      imap \
+      intl \
+      ldap \
+      memcached \
+      mysqli \
+      pgsql \
+      shmop \
+      soap \
+      sockets \
+      sysvsem \
+      xsl \
+ && rm -rf /tmp/* /var/tmp/*
 
-# NGINX config
-COPY nginx.conf /etc/nginx/http.d/default.conf
+# Real client IP behind the platform's Traefik ingress. The upstream image
+# already trusts the private CIDRs (the pod network lives in 10.0.0.0/8) and
+# already sets `absolute_redirect off`, so the only wrong piece is the header
+# name — it defaults to Cloudflare's, which no request here carries. Rewrite
+# that one line rather than adding a second directive: nginx rejects a
+# duplicate real_ip_header in the same context.
+RUN sed -i 's|^real_ip_header .*|real_ip_header X-Forwarded-For;|' \
+      /etc/nginx/server-opts.d/remoteip.conf \
+ && grep -q '^real_ip_header X-Forwarded-For;$' /etc/nginx/server-opts.d/remoteip.conf
 
-# PHP-FPM config
-RUN sed -i 's/^user = .*/user = webuser/' /usr/local/etc/php-fpm.d/www.conf \
-  && sed -i 's/^group = .*/group = webuser/' /usr/local/etc/php-fpm.d/www.conf \
-  && sed -i 's/^listen = .*/listen = 127.0.0.1:9000/' /usr/local/etc/php-fpm.d/www.conf
-
-# PHP production settings
-RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/conf.d/production.ini
-
-# Supervisor to run nginx + php-fpm
-COPY supervisord.conf /etc/supervisor.d/hosting.ini
-
-# Document root
-RUN mkdir -p /var/www/html && chown -R webuser:webuser /var/www/html
-WORKDIR /var/www/html
-
-EXPOSE 80
-
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
-
-CMD ["supervisord", "-n", "-c", "/etc/supervisord.conf"]
+USER www-data

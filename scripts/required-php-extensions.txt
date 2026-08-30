@@ -1,0 +1,72 @@
+# Extensions that MUST be present in the finished apache-php / nginx-php
+# images. Asserted against `php -m` of the built image by
+# scripts/check-php-extensions.sh (wired into the image build workflow).
+#
+# This list deliberately includes extensions that come from the upstream base
+# image as well as the ones our Dockerfiles add. A base-image regression is
+# exactly how mysqli went missing from the nginx-alpine variant and how gd
+# was lost platform-wide in April 2026 — the guard has to catch both.
+#
+# Lines starting with # and blank lines are ignored. Matching is
+# case-insensitive against whole `php -m` entries.
+
+# --- core web application baseline (from the base image) ---
+ctype
+curl
+dom
+fileinfo
+filter
+iconv
+json
+mbstring
+openssl
+pcntl
+PDO
+Phar
+posix
+session
+SimpleXML
+sodium
+tokenizer
+xml
+xmlreader
+xmlwriter
+Zend OPcache
+zip
+zlib
+
+# --- databases and caches ---
+mysqli
+pdo_mysql
+pdo_pgsql
+pdo_sqlite
+pgsql
+sqlite3
+redis
+memcached
+apcu
+
+# --- images ---
+gd
+imagick
+exif
+
+# --- mail ---
+imap
+
+# --- i18n / maths / markup ---
+intl
+bcmath
+gmp
+gettext
+calendar
+xsl
+soap
+
+# --- filesystem, network, IPC ---
+ftp
+sockets
+ldap
+bz2
+shmop
+sysvsem

@@ -1,29 +1,60 @@
-FROM php:8.4-apache-bookworm
+# Apache + PHP-FPM runtime for the Insula platform.
+#
+# Based on serversideup/php rather than the bare official php image: their
+# entrypoint is what implements the PHP_* tuning knobs the catalog manifest
+# exposes to tenants (PHP_MEMORY_LIMIT, PHP_UPLOAD_MAX_FILE_SIZE, …), the
+# non-root www-data runtime, port 8080 and the /healthcheck endpoint. Basing
+# on it keeps that contract intact; we only add what tenants' applications
+# need on top.
+#
+# Why we build at all instead of using serversideup directly: their image
+# ships a deliberately minimal extension set (no gd, imap, intl, bcmath,
+# soap, … and no mysqli at all on the nginx-alpine variant), which fails a
+# large share of real PHP applications. Platform architecture §2.8 calls for
+# shipping one fat image covering the common cases.
+ARG PHP_VERSION=8.4
+FROM serversideup/php:${PHP_VERSION}-fpm-apache
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
-    libicu-dev libzip-dev curl \
-  && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install -j$(nproc) \
-    gd pdo_mysql mysqli intl zip opcache bcmath \
-  && a2enmod rewrite headers expires remoteip \
-  && apt-get clean && rm -rf /var/lib/apt/lists/*
+USER root
 
-# Real client IP recovery behind the platform's Traefik reverse proxy: rewrite
-# REMOTE_ADDR (seen by PHP) and %a/%h (logs) from X-Forwarded-For so apps see
-# the real visitor instead of the Traefik pod IP (10.42.x.x). See remoteip.conf.
-COPY remoteip.conf /etc/apache2/conf-enabled/remoteip.conf
+# Extensions. The authoritative list of what MUST be present in the finished
+# image lives in scripts/required-php-extensions.txt and is asserted by
+# scripts/check-php-extensions.sh in CI — keep the two in sync.
+#
+# install-php-extensions ships in the base image; it resolves build deps,
+# compiles, enables, then removes the build deps again.
+RUN install-php-extensions \
+      apcu \
+      bcmath \
+      bz2 \
+      calendar \
+      exif \
+      ftp \
+      gd \
+      gettext \
+      gmp \
+      imagick \
+      imap \
+      intl \
+      ldap \
+      memcached \
+      mysqli \
+      pgsql \
+      shmop \
+      soap \
+      sockets \
+      sysvsem \
+      xsl \
+ && rm -rf /tmp/* /var/tmp/*
 
-# PHP production settings
-RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/conf.d/production.ini
+# Real client IP + scheme-aware redirects behind the platform's Traefik
+# ingress. Appended to the END of the upstream vhost templates so our
+# directives win over the Cloudflare-oriented defaults baked into them,
+# while leaving the upstream file otherwise untouched (minimal drift).
+COPY vhost-extra.conf /etc/apache2/insula/vhost-extra.conf
+RUN for tpl in http https; do \
+      printf '\n# --- Insula platform overrides ---\nInclude /etc/apache2/insula/vhost-extra.conf\n' \
+        >> "/etc/apache2/vhost-templates/${tpl}.conf"; \
+    done
 
-# Run as non-root
-RUN useradd -u 1000 -ms /bin/bash webuser \
-  && chown -R webuser:webuser /var/www/html
-
-WORKDIR /var/www/html
-
-EXPOSE 80
-
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
+USER www-data

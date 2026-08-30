@@ -3,17 +3,22 @@ name: Build & Push Catalog Images
 # ghcr.io/insulahq/application-catalog/<image>. Editing this workflow is in
 # every path filter below, so a commit here rebuilds & republishes ALL images
 # — the mechanism used to repoint the full set after the phoenixtechnam→insulahq move.
+#
+# The two PHP runtimes are built once per supported PHP version (see
+# PHP_VERSIONS below) because their manifests offer 8.3/8.4/8.5. Everything
+# else builds a single image whose version tag comes from its chart values.
 
 on:
   push:
     branches: [main]
     paths:
       - 'nginx-php/Dockerfile'
-      - 'nginx-php/nginx.conf'
-      - 'nginx-php/supervisord.conf'
       - 'nginx-php/.dockerignore'
       - 'apache-php/Dockerfile'
+      - 'apache-php/vhost-extra.conf'
       - 'apache-php/.dockerignore'
+      - 'scripts/required-php-extensions.txt'
+      - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
       - 'static-nginx/nginx.conf'
       - 'static-nginx/worker-entry.go'
@@ -48,11 +53,12 @@ on:
     branches: [main]
     paths:
       - 'nginx-php/Dockerfile'
-      - 'nginx-php/nginx.conf'
-      - 'nginx-php/supervisord.conf'
       - 'nginx-php/.dockerignore'
       - 'apache-php/Dockerfile'
+      - 'apache-php/vhost-extra.conf'
       - 'apache-php/.dockerignore'
+      - 'scripts/required-php-extensions.txt'
+      - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
       - 'static-nginx/nginx.conf'
       - 'static-nginx/worker-entry.go'
@@ -84,22 +90,42 @@ on:
       - 'bun-latest/.dockerignore'
       - '.github/workflows/build-images.yml'
 
-# Cancel superseded runs for the same ref so a fast follow-up push
-# doesn't waste runner minutes on the previous build.
+  # Weekly rebuild of the PHP runtimes ONLY. We build these ourselves now, so
+  # the base-image security patches serversideup ship daily no longer reach
+  # tenants for free — this is how we pick them up. Deliberately not extended
+  # to the other runtimes: republishing their moving tags on a timer is a
+  # separate decision with its own drift consequences.
+  schedule:
+    - cron: '17 4 * * 1'
+
+  # Manual rebuild. Pushes only from main (see should_push below).
+  workflow_dispatch:
+
 concurrency:
   group: build-images-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  # Every PHP version the apache-php / nginx-php manifests offer. Keep in
+  # sync with their supportedVersions arrays — ci-validate checks this.
+  PHP_VERSIONS: '["8.3","8.4","8.5"]'
 
 jobs:
   detect:
     name: Detect changed images
     runs-on: ubuntu-latest
     outputs:
-      images: ${{ steps.filter.outputs.changes }}
+      # Images built once (tag from chart values).
+      single: ${{ steps.split.outputs.single }}
+      # PHP runtimes, built once per PHP version.
+      php: ${{ steps.split.outputs.php }}
+      php_versions: ${{ steps.split.outputs.versions }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
         with:
           # Each filter lists ONLY files that affect the image build —
           # not manifest.json/chart/icon (those are catalog metadata and
@@ -108,13 +134,16 @@ jobs:
           filters: |
             nginx-php:
               - 'nginx-php/Dockerfile'
-              - 'nginx-php/nginx.conf'
-              - 'nginx-php/supervisord.conf'
               - 'nginx-php/.dockerignore'
+              - 'scripts/required-php-extensions.txt'
+              - 'scripts/check-php-extensions.sh'
               - '.github/workflows/build-images.yml'
             apache-php:
               - 'apache-php/Dockerfile'
+              - 'apache-php/vhost-extra.conf'
               - 'apache-php/.dockerignore'
+              - 'scripts/required-php-extensions.txt'
+              - 'scripts/check-php-extensions.sh'
               - '.github/workflows/build-images.yml'
             static-nginx:
               - 'static-nginx/Dockerfile'
@@ -166,10 +195,33 @@ jobs:
               - 'bun-latest/.dockerignore'
               - '.github/workflows/build-images.yml'
 
+      # Split the changed set into "PHP runtimes" (version matrix) and
+      # "everything else" (single build). On schedule/workflow_dispatch there
+      # is no diff to filter, so rebuild the PHP runtimes unconditionally.
+      - name: Split changed images
+        id: split
+        env:
+          CHANGED: ${{ steps.filter.outputs.changes }}
+          EVENT: ${{ github.event_name }}
+          PHP_VERSIONS: ${{ env.PHP_VERSIONS }}
+        run: |
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
+            changed='["apache-php","nginx-php"]'
+          else
+            changed="${CHANGED:-[]}"
+          fi
+          php=$(echo "$changed"   | jq -c '[.[] | select(. == "apache-php" or . == "nginx-php")]')
+          single=$(echo "$changed" | jq -c '[.[] | select(. != "apache-php" and . != "nginx-php")]')
+          echo "versions=$PHP_VERSIONS" >> "$GITHUB_OUTPUT"
+          echo "php=$php"       >> "$GITHUB_OUTPUT"
+          echo "single=$single" >> "$GITHUB_OUTPUT"
+          echo "PHP matrix:    $php"
+          echo "Single images: $single"
+
   build:
     name: Build ${{ matrix.image }}
     needs: detect
-    if: needs.detect.outputs.images != '[]'
+    if: needs.detect.outputs.single != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -177,14 +229,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ${{ fromJSON(needs.detect.outputs.images) }}
+        image: ${{ fromJSON(needs.detect.outputs.single) }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
 
       # Read the version tag from the chart's values.yaml (single source of
-      # truth for the major-version-suffixed tag, e.g. "8.4", "1.27", "22").
+      # truth for the major-version-suffixed tag, e.g. "1.27", "22").
       # If the chart is missing or has no image.tag, default to "latest" only.
       - name: Resolve image tag from chart values
         id: tag
@@ -223,3 +275,151 @@ jobs:
             ghcr.io/${{ github.repository }}/${{ matrix.image }}:latest
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  build-php:
+    name: Build ${{ matrix.image }} (PHP ${{ matrix.php }})
+    needs: detect
+    if: needs.detect.outputs.php != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.detect.outputs.php) }}
+        php: ${{ fromJSON(needs.detect.outputs.php_versions) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # `:latest` must track exactly ONE PHP version, otherwise the three
+      # matrix legs race for the tag and the winner is whichever finishes
+      # last. The manifest already names the default — use it.
+      - name: Resolve default PHP version
+        id: default
+        run: |
+          default_version=$(jq -r '.supportedVersions[] | select(.isDefault == true) | .version' \
+            "${{ matrix.image }}/manifest.json")
+          if [ -z "$default_version" ] || [ "$default_version" = "null" ]; then
+            echo "::error::${{ matrix.image }}/manifest.json declares no isDefault version"
+            exit 1
+          fi
+          echo "version=$default_version" >> "$GITHUB_OUTPUT"
+          echo "Default PHP version for ${{ matrix.image }}: $default_version"
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and LOAD first (never push straight from the build): the image
+      # has to pass the extension assertion before anything can pull it.
+      - name: Build (load locally)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image }}
+          build-args: PHP_VERSION=${{ matrix.php }}
+          load: true
+          tags: local/${{ matrix.image }}:${{ matrix.php }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.php }}
+          cache-to: type=gha,scope=${{ matrix.image }}-${{ matrix.php }},mode=max
+
+      # The gate. A missing extension fails the build instead of shipping a
+      # runtime that silently cannot run tenants' applications.
+      - name: Assert required PHP extensions
+        run: scripts/check-php-extensions.sh local/${{ matrix.image }}:${{ matrix.php }}
+
+      - name: Smoke test the runtime
+        run: |
+          set -euo pipefail
+          # Both webroot vars are set regardless of variant (Apache reads the
+          # first, NGINX the second); the image default is the Laravel-style
+          # /var/www/html/public, while the catalog manifest pins /var/www/html.
+          cid=$(docker run -d -p 18080:8080 \
+                  -e APACHE_DOCUMENT_ROOT=/var/www/html \
+                  -e NGINX_WEBROOT=/var/www/html \
+                  local/${{ matrix.image }}:${{ matrix.php }})
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/healthcheck >/dev/null 2>&1; then
+              echo "healthcheck OK after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::${{ matrix.image }} ${{ matrix.php }} never became healthy"
+          docker logs "$cid" | tail -50
+          exit 1
+
+      # Real-IP assertion against the BUILT IMAGE. Previously this lived in
+      # scripts/test-real-client-ip.sh and mounted a standalone config file;
+      # the handling now lives inside the image (an appended vhost include for
+      # Apache, a rewritten real_ip_header for NGINX), so the only meaningful
+      # test is against the artefact. The runner reaches the container over the
+      # docker bridge (172.17.0.0/16), which is inside the trusted proxy CIDRs
+      # — the same shape as Traefik's pod address.
+      - name: Assert real client IP
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          printf '<?php echo $_SERVER["REMOTE_ADDR"];' > "$work/ip.php"
+          chmod -R 755 "$work"
+          cid=$(docker run -d -p 18081:8080 -v "$work:/var/www/html" \
+                  -e APACHE_DOCUMENT_ROOT=/var/www/html \
+                  -e NGINX_WEBROOT=/var/www/html \
+                  local/${{ matrix.image }}:${{ matrix.php }})
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true; rm -rf "$work"' EXIT
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:18081/ip.php >/dev/null 2>&1 && break
+            sleep 1
+          done
+          fails=0
+          check() { # name expected actual
+            if [ "$3" = "$2" ]; then printf '  OK   %-28s %s\n' "$1" "$3"
+            else printf '  FAIL %-28s got %s, want %s\n' "$1" "$3" "$2"; fails=$((fails+1)); fi
+          }
+          got=$(curl -fsS -H 'X-Forwarded-For: 203.0.113.7' http://127.0.0.1:18081/ip.php)
+          check "single XFF" "203.0.113.7" "$got"
+          # Traefik APPENDS the peer it saw, so the RIGHT-most entry is the
+          # truth — a forged prefix must not win or any tenant rate limit is
+          # bypassable with one header.
+          got=$(curl -fsS -H 'X-Forwarded-For: 9.9.9.9, 203.0.113.8' http://127.0.0.1:18081/ip.php)
+          check "forged prefix ignored" "203.0.113.8" "$got"
+          got=$(curl -fsS -H 'X-Forwarded-For: 2001:db8::1' http://127.0.0.1:18081/ip.php)
+          check "IPv6 client" "2001:db8::1" "$got"
+          # No XFF at all: fall back to the peer, never empty.
+          got=$(curl -fsS http://127.0.0.1:18081/ip.php)
+          case "$got" in
+            10.*|172.*|192.168.*) printf '  OK   %-28s %s\n' "no XFF falls back to peer" "$got" ;;
+            *) printf '  FAIL %-28s %s\n' "no XFF falls back to peer" "$got"; fails=$((fails+1)) ;;
+          esac
+          if [ "$fails" -gt 0 ]; then
+            echo "::error::${{ matrix.image }} ${{ matrix.php }} does not resolve the real client IP"
+            docker logs "$cid" | tail -30
+            exit 1
+          fi
+
+      - name: Push
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          REPO: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          LOCAL: local/${{ matrix.image }}:${{ matrix.php }}
+        run: |
+          set -euo pipefail
+          # :<php>-<sha> is immutable and traceable. The bare :<php> tag is
+          # what the catalog manifests reference. :latest only for the
+          # manifest's default version.
+          tags="${{ matrix.php }}-${{ github.sha }} ${{ matrix.php }}"
+          if [ "${{ matrix.php }}" = "${{ steps.default.outputs.version }}" ]; then
+            tags="$tags latest"
+          fi
+          for t in $tags; do
+            docker tag "$LOCAL" "$REPO:$t"
+            docker push "$REPO:$t"
+            echo "pushed $REPO:$t"
+          done
