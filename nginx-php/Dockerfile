@@ -49,6 +49,32 @@ RUN sed -i 's|^real_ip_header .*|real_ip_header X-Forwarded-For;|' \
       /etc/nginx/server-opts.d/remoteip.conf \
  && grep -q '^real_ip_header X-Forwarded-For;$' /etc/nginx/server-opts.d/remoteip.conf
 
+# Scheme the VISITOR used. remoteip.conf above fixes WHO the client is; this
+# fixes WHAT SCHEME they used, which the upstream image gets wrong behind a
+# TLS-terminating proxy (nginx's $https is empty, so `HTTPS` is never sent to
+# PHP). See scheme.conf for the measured symptom and the trust model.
+#
+# The maps must live in `http` context (conf.d), but the fastcgi_param
+# overrides must live in fastcgi_params: the site's location does
+# `include fastcgi_params`, and fastcgi_param does NOT merge across levels —
+# a location-level set REPLACES everything inherited, so defining these at
+# http context would be silently discarded.
+#
+# `00-` prefix so the maps are parsed before default.conf uses them.
+COPY scheme.conf /etc/nginx/conf.d/00-insula-scheme.conf
+RUN for f in /etc/nginx/fastcgi_params /etc/nginx/fastcgi.conf; do \
+      [ -f "$f" ] || continue; \
+      sed -i \
+        -e 's|^\(fastcgi_param[[:space:]]\+HTTPS[[:space:]]\+\)\$https|\1$insula_https|' \
+        -e 's|^\(fastcgi_param[[:space:]]\+REQUEST_SCHEME[[:space:]]\+\)\$scheme;|\1$insula_scheme;|' \
+        -e 's|^\(fastcgi_param[[:space:]]\+SERVER_PORT[[:space:]]\+\)\$server_port;|\1$insula_server_port;|' \
+        "$f"; \
+    done \
+ && for v in insula_https insula_scheme insula_server_port; do \
+      grep -q "\$$v" /etc/nginx/fastcgi_params \
+        || { echo "fastcgi_params was not rewired for \$$v — upstream layout changed"; exit 1; }; \
+    done
+
 # ── Platform defaults ────────────────────────────────────────────────────────
 # These override the base image's own ENV so a tenant who configures nothing
 # still gets a lean, production-shaped runtime. Every one of them is listed in
