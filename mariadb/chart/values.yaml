@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: mariadb
-  tag: "11.4"
+  tag: "12.3"
   pullPolicy: IfNotPresent
 
 service:
@@ -27,3 +27,24 @@ auth:
   database: ""
   username: ""
   password: ""
+
+# Low-footprint server tuning. Mirrors `components[].args` in manifest.json —
+# the manifest is what the platform deploys; keep the two in step.
+# The InnoDB buffer pool is deliberately left at its 128M default: shrinking it
+# costs far more in IO than it saves in RAM.
+serverArgs:
+  - --key-buffer-size=8M
+  - --aria-pagecache-buffer-size=16M
+  - --innodb-log-buffer-size=8M
+  - --max-connections=60
+  - --thread-cache-size=8
+  - --back-log=30
+  - --innodb-purge-threads=1
+  - --table-open-cache=400
+  - --table-definition-cache=400
+  - --sort-buffer-size=512K
+  - --join-buffer-size=256K
+  - --read-buffer-size=128K
+  - --read-rnd-buffer-size=256K
+  - --tmp-table-size=8M
+  - --max-heap-table-size=8M

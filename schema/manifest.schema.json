@@ -264,6 +264,13 @@
                             "type": "string"
                         }
                     },
+                    "args": {
+                        "type": "array",
+                        "description": "Container args, appended after the image entrypoint. Replaces the image CMD, so a server that takes its tuning as command-line flags (mariadbd/mysqld) can be configured without a derived image.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "database": {
                         "type": "string",
                         "description": "Database engine this component provides \u2014 enables SQL Manager access",
