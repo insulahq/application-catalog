@@ -2,20 +2,20 @@
     "name": "Apache + PHP",
     "code": "apache-php",
     "type": "runtime",
-    "version": "8.4",
+    "version": "8.5",
     "description": "Apache HTTP Server with PHP-FPM for traditional PHP hosting with .htaccess support. Ships gd, imagick, imap, intl, soap, ldap, bcmath, gmp, exif, xsl, mysqli, pgsql, memcached, apcu and redis.",
     "category": "runtime",
     "min_plan": "starter",
     "runtime": "php",
     "web_server": "apache",
-    "image": "ghcr.io/insulahq/application-catalog/apache-php:8.4",
+    "image": "ghcr.io/insulahq/application-catalog/apache-php:8.5",
     "has_dockerfile": true,
     "deployment_strategy": "deployment",
     "components": [
         {
             "name": "apache-php",
             "type": "deployment",
-            "image": "ghcr.io/insulahq/application-catalog/apache-php:8.4",
+            "image": "ghcr.io/insulahq/application-catalog/apache-php:8.5",
             "ports": [
                 {
                     "port": 8080,
@@ -402,7 +402,7 @@
         },
         {
             "version": "8.4",
-            "isDefault": true,
+            "isDefault": false,
             "upgradeFrom": [
                 "8.3"
             ],
@@ -415,7 +415,7 @@
         },
         {
             "version": "8.5",
-            "isDefault": false,
+            "isDefault": true,
             "upgradeFrom": [
                 "8.4"
             ],
