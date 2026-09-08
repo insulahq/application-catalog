@@ -52,10 +52,19 @@ RUN install-php-extensions \
 # directives win over the Cloudflare-oriented defaults baked into them,
 # while leaving the upstream file otherwise untouched (minimal drift).
 COPY vhost-extra.conf /etc/apache2/insula/vhost-extra.conf
+COPY site-common.conf /etc/apache2/insula/site-common.conf
 RUN for tpl in http https; do \
       printf '\n# --- Insula platform overrides ---\nInclude /etc/apache2/insula/vhost-extra.conf\n' \
         >> "/etc/apache2/vhost-templates/${tpl}.conf"; \
     done
+
+# Multi-host: an empty include directory the platform mounts a ConfigMap over,
+# enabled through a sites-available entry that sorts AFTER the entrypoint's
+# ssl-<mode>.conf so the stock vhost stays Apache's default (catch-all).
+# With nothing mounted, IncludeOptional matches no files and this is inert.
+COPY sites-include.conf /etc/apache2/sites-available/zz-insula-sites.conf
+RUN mkdir -p /etc/apache2/insula/sites.d \
+ && a2ensite zz-insula-sites
 
 # ── Platform defaults ────────────────────────────────────────────────────────
 # These override the base image's own ENV so a tenant who configures nothing

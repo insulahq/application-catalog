@@ -166,6 +166,56 @@
                 null
             ]
         },
+        "multihost": {
+            "type": "object",
+            "description": "Multi-host capability. PRESENCE of this block is what makes an entry eligible for the platform's multi-host mode (one pod serving several ingress routes, each from its own folder) \u2014 capability is declared, never inferred from web_server. It tells the platform WHICH flavour and WHERE; the vhost text itself is rendered by the platform, never supplied by a catalog repository.",
+            "properties": {
+                "server": {
+                    "type": "string",
+                    "enum": [
+                        "apache"
+                    ],
+                    "description": "Config flavour the platform renders. Only 'apache' is implemented today; nginx follows."
+                },
+                "web_root": {
+                    "type": "string",
+                    "description": "Docroot of the stock single-site vhost, which stays the catch-all for hostnames matching no generated site."
+                },
+                "sites_root": {
+                    "type": "string",
+                    "description": "Where the platform mounts the tenant PVC ROOT, so a route may serve ANY folder the tenant can see in the file manager."
+                },
+                "config_dir": {
+                    "type": "string",
+                    "description": "Directory the image includes and the platform mounts the generated per-route vhost ConfigMap over."
+                },
+                "validate": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Argv that returns non-zero on a bad config. Run before every reload; a failure aborts the change instead of breaking the running server."
+                },
+                "reload": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "description": "Argv for a graceful, non-dropping reload \u2014 never a restart."
+                }
+            },
+            "required": [
+                "server",
+                "web_root",
+                "sites_root",
+                "config_dir",
+                "validate",
+                "reload"
+            ],
+            "additionalProperties": false
+        },
         "image": {
             "type": [
                 "string",
