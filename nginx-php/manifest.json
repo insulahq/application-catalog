@@ -299,7 +299,6 @@
             "key": "PHP_DISABLE_FUNCTIONS",
             "label": "Disabled PHP Functions",
             "type": "string",
-            "default": "",
             "description": "Comma-separated PHP functions to disable for WEB requests only (FPM pool scope; CLI and cron keep them, so composer/wp-cli/occ still work). The platform sets this automatically on multi-host deployments, because open_basedir does not restrain a child process — shell_exec walks straight past it into a neighbouring site. Recommended: exec,shell_exec,system,passthru,popen,proc_open,pcntl_exec",
             "advanced": true
         },
