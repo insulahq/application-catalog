@@ -93,4 +93,24 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html \
     PHP_OPCACHE_ENABLE=1 \
     PHP_OPCACHE_MEMORY_CONSUMPTION=64
 
+
+# --- Per-request PHP hardening for multi-host serving -------------------------
+# `open_basedir` sandboxes a site's PHP to its own app root, but it does NOT
+# restrain a CHILD process: `shell_exec("cat /var/www/sites/other/config.php")`
+# reads a neighbouring site straight through it. Measured, not assumed.
+#
+# So the sandbox is only worth anything alongside a function ban, and the ban
+# belongs in the FPM POOL rather than a php.ini conf.d file: pool scope covers
+# web requests only, leaving the CLI SAPI intact so composer, wp-cli, artisan
+# and occ keep working over SSH and cron — which is where they are run anyway.
+#
+# Empty by default, so a single-site deployment is unchanged: it mounts only
+# its own storage subPath and has no neighbour to reach. The platform sets the
+# value on deployments with multi-host enabled, where the pod mounts the whole
+# tenant volume.
+ENV PHP_DISABLE_FUNCTIONS=""
+RUN printf '\nphp_admin_value[disable_functions] = ${PHP_DISABLE_FUNCTIONS}\n' \
+      >> /usr/local/etc/php-fpm.d/docker-php-serversideup-pool.conf \
+ && grep -q 'disable_functions' /usr/local/etc/php-fpm.d/docker-php-serversideup-pool.conf
+
 USER www-data

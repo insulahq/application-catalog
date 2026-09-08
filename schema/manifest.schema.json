@@ -215,6 +215,20 @@
                     },
                     "minItems": 1,
                     "description": "Argv for a graceful, non-dropping reload \u2014 never a restart."
+                },
+                "php": {
+                    "type": "object",
+                    "description": "PRESENT only on PHP runtimes. Its presence is what makes the platform sandbox each generated vhost with PHP's open_basedir, scoped to that site's application root \u2014 declared here rather than inferred from `server`, because the nginx flavour covers both static-nginx (no PHP, nothing to sandbox) and nginx-php. Without it a multi-host pod lets any one site read every other site's files, since the pod mounts the whole tenant volume.",
+                    "properties": {
+                        "open_basedir_extra": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Absolute paths the image needs on top of the app root. `/tmp` belongs here for every image that leaves session.save_path and upload_tmp_dir empty: PHP then falls back to the system temp dir, and excluding it breaks sessions and uploads on every site."
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "required": [

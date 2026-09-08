@@ -23,7 +23,12 @@
             "/usr/sbin/nginx",
             "-s",
             "reload"
-        ]
+        ],
+        "php": {
+            "open_basedir_extra": [
+                "/tmp"
+            ]
+        }
     },
     "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.4",
     "has_dockerfile": true,
@@ -291,6 +296,14 @@
             "advanced": true
         },
         {
+            "key": "PHP_DISABLE_FUNCTIONS",
+            "label": "Disabled PHP Functions",
+            "type": "string",
+            "default": "",
+            "description": "Comma-separated PHP functions to disable for WEB requests only (FPM pool scope; CLI and cron keep them, so composer/wp-cli/occ still work). The platform sets this automatically on multi-host deployments, because open_basedir does not restrain a child process — shell_exec walks straight past it into a neighbouring site. Recommended: exec,shell_exec,system,passthru,popen,proc_open,pcntl_exec",
+            "advanced": true
+        },
+        {
             "key": "PHP_POST_MAX_SIZE",
             "label": "POST Max Size",
             "type": "string",
@@ -393,6 +406,7 @@
             "PHP_OPCACHE_SAVE_COMMENTS",
             "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
             "PHP_OPEN_BASEDIR",
+            "PHP_DISABLE_FUNCTIONS",
             "PHP_POST_MAX_SIZE",
             "PHP_REALPATH_CACHE_TTL",
             "PHP_SESSION_COOKIE_SECURE",
