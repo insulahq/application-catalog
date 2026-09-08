@@ -8,6 +8,22 @@
     "min_plan": "starter",
     "runtime": "static",
     "web_server": "apache",
+    "multihost": {
+        "server": "apache",
+        "web_root": "/usr/local/apache2/htdocs",
+        "sites_root": "/var/www/sites",
+        "config_dir": "/usr/local/apache2/conf/insula/sites.d",
+        "common_include": "/usr/local/apache2/conf/insula/site-common.conf",
+        "listen": 80,
+        "validate": [
+            "/usr/local/apache2/bin/httpd",
+            "-t"
+        ],
+        "reload": [
+            "/usr/local/apache2/bin/apachectl",
+            "graceful"
+        ]
+    },
     "image": null,
     "has_dockerfile": true,
     "deployment_strategy": "deployment",

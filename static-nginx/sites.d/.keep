@@ -1,0 +1,2 @@
+Generated multi-host site configs are mounted over this directory by the
+platform. It ships empty so the mount point exists in the image.

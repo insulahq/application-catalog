@@ -173,9 +173,10 @@
                 "server": {
                     "type": "string",
                     "enum": [
-                        "apache"
+                        "apache",
+                        "nginx"
                     ],
-                    "description": "Config flavour the platform renders. Only 'apache' is implemented today; nginx follows."
+                    "description": "Config flavour the platform renders (one renderer per flavour; the platform refuses a flavour it cannot render rather than emitting an empty config)."
                 },
                 "web_root": {
                     "type": "string",

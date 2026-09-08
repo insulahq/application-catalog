@@ -8,6 +8,12 @@ COPY httpd.conf /usr/local/apache2/conf/httpd.conf
 # entrypoint writes a glue file here that includes the tenant's own directory.
 COPY user-include/ /usr/local/apache2/conf/user-include/
 
+# Multi-host: the catch-all vhost, the directives every generated site shares,
+# and the empty include dir the platform mounts a ConfigMap over.
+COPY catchall.conf /usr/local/apache2/conf/insula/catchall.conf
+COPY site-common.conf /usr/local/apache2/conf/insula/site-common.conf
+RUN mkdir -p /usr/local/apache2/conf/insula/sites.d
+
 # config-readme.txt is seeded into the tenant's APACHE_CONF_DIR at runtime so
 # the guidance sits where they work (file manager / SFTP).
 COPY config-readme.txt /usr/local/share/apache-config-readme.txt

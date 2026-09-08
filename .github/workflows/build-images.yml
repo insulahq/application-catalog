@@ -13,6 +13,8 @@ on:
     branches: [main]
     paths:
       - 'nginx-php/Dockerfile'
+      - 'nginx-php/sites-include.conf'
+      - 'nginx-php/entrypoint-multihost.sh'
       - 'nginx-php/.dockerignore'
       - 'apache-php/Dockerfile'
       - 'apache-php/vhost-extra.conf'
@@ -23,6 +25,9 @@ on:
       - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
       - 'static-nginx/nginx.conf'
+      - 'static-nginx/sites-include.conf'
+      - 'static-nginx/site-common.conf'
+      - 'static-nginx/sites.d/**'
       - 'static-nginx/worker-entry.go'
       - 'static-nginx/docroot/**'
       - 'static-nginx/user-include/**'
@@ -30,6 +35,8 @@ on:
       - 'static-nginx/.dockerignore'
       - 'static-apache/Dockerfile'
       - 'static-apache/httpd.conf'
+      - 'static-apache/catchall.conf'
+      - 'static-apache/site-common.conf'
       - 'static-apache/docker-entrypoint.sh'
       - 'static-apache/user-include/**'
       - 'static-apache/config-readme.txt'
@@ -55,6 +62,8 @@ on:
     branches: [main]
     paths:
       - 'nginx-php/Dockerfile'
+      - 'nginx-php/sites-include.conf'
+      - 'nginx-php/entrypoint-multihost.sh'
       - 'nginx-php/.dockerignore'
       - 'apache-php/Dockerfile'
       - 'apache-php/vhost-extra.conf'
@@ -65,6 +74,9 @@ on:
       - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
       - 'static-nginx/nginx.conf'
+      - 'static-nginx/sites-include.conf'
+      - 'static-nginx/site-common.conf'
+      - 'static-nginx/sites.d/**'
       - 'static-nginx/worker-entry.go'
       - 'static-nginx/docroot/**'
       - 'static-nginx/user-include/**'
@@ -72,6 +84,8 @@ on:
       - 'static-nginx/.dockerignore'
       - 'static-apache/Dockerfile'
       - 'static-apache/httpd.conf'
+      - 'static-apache/catchall.conf'
+      - 'static-apache/site-common.conf'
       - 'static-apache/docker-entrypoint.sh'
       - 'static-apache/user-include/**'
       - 'static-apache/config-readme.txt'
@@ -138,6 +152,8 @@ jobs:
           filters: |
             nginx-php:
               - 'nginx-php/Dockerfile'
+              - 'nginx-php/sites-include.conf'
+              - 'nginx-php/entrypoint-multihost.sh'
               - 'nginx-php/.dockerignore'
               - 'scripts/required-php-extensions.txt'
               - 'scripts/check-php-extensions.sh'
@@ -154,6 +170,9 @@ jobs:
             static-nginx:
               - 'static-nginx/Dockerfile'
               - 'static-nginx/nginx.conf'
+              - 'static-nginx/sites-include.conf'
+              - 'static-nginx/site-common.conf'
+              - 'static-nginx/sites.d/**'
               - 'static-nginx/worker-entry.go'
               - 'static-nginx/docroot/**'
               - 'static-nginx/user-include/**'
@@ -163,6 +182,8 @@ jobs:
             static-apache:
               - 'static-apache/Dockerfile'
               - 'static-apache/httpd.conf'
+              - 'static-apache/catchall.conf'
+              - 'static-apache/site-common.conf'
               - 'static-apache/docker-entrypoint.sh'
               - 'static-apache/user-include/**'
               - 'static-apache/config-readme.txt'

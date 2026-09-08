@@ -8,6 +8,23 @@
     "min_plan": "starter",
     "runtime": "static",
     "web_server": "nginx",
+    "multihost": {
+        "server": "nginx",
+        "web_root": "/var/www/html",
+        "sites_root": "/var/www/sites",
+        "config_dir": "/etc/nginx/insula/sites.d",
+        "common_include": "/etc/nginx/insula/site-common.conf",
+        "listen": 8080,
+        "validate": [
+            "/usr/sbin/nginx",
+            "-t"
+        ],
+        "reload": [
+            "/usr/sbin/nginx",
+            "-s",
+            "reload"
+        ]
+    },
     "image": null,
     "has_dockerfile": true,
     "deployment_strategy": "deployment",

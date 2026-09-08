@@ -102,4 +102,20 @@ ENV NGINX_WEBROOT=/var/www/html \
     PHP_OPCACHE_ENABLE=1 \
     PHP_OPCACHE_MEMORY_CONSUMPTION=64
 
+# Multi-host: an include dir the platform mounts a ConfigMap over, plus a
+# startup-generated file holding the directives every site shares. Generated at
+# startup rather than baked in because the PHP location carries three
+# tenant-controlled values (NGINX_FASTCGI_BUFFERS, NGINX_FASTCGI_BUFFER_SIZE
+# and PHP_MAX_EXECUTION_TIME); a static copy would hand multi-host sites
+# nginx's defaults while the stock server honoured the tenant's settings.
+#
+# The include glob matches nothing until something is mounted, and a wildcard
+# include matching no files is not an error in nginx, so this is inert on a
+# single-site deployment.
+COPY sites-include.conf /etc/nginx/conf.d/zz-insula-sites.conf
+COPY entrypoint-multihost.sh /etc/entrypoint.d/60-insula-multihost.sh
+RUN mkdir -p /etc/nginx/insula/sites.d \
+ && chown -R www-data:www-data /etc/nginx/insula \
+ && chmod +x /etc/entrypoint.d/60-insula-multihost.sh
+
 USER www-data
