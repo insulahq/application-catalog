@@ -405,7 +405,6 @@
             "PHP_OPCACHE_SAVE_COMMENTS",
             "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
             "PHP_OPEN_BASEDIR",
-            "PHP_DISABLE_FUNCTIONS",
             "PHP_POST_MAX_SIZE",
             "PHP_REALPATH_CACHE_TTL",
             "PHP_SESSION_COOKIE_SECURE",

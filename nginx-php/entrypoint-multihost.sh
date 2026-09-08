@@ -43,6 +43,23 @@ ${insula_listen}
 index index.html index.htm index.php;
 charset utf-8;
 
+# No symlink following out of a site. A symlink inside one site's folder
+# pointing at a sibling's is served by NGINX directly — open_basedir and
+# disable_functions are PHP controls and never see such a request, so both are
+# bypassed. Reproduced against this image: the sibling's config file came back
+# as text/plain with PHP never invoked. `location ~ \.php$` matches the
+# REQUESTED name, not the target, so any other extension skips FPM entirely.
+#
+# `from=$document_root` checks the components below the document root, where
+# such a symlink sits, without failing on a link higher up the mount path.
+# `if_not_owner` would be a no-op here: every file has the same runtime uid.
+#
+# COST, deliberately accepted: an app shipping a symlink under its document
+# root (Laravel's `public/storage`) stops resolving it — use a real directory.
+# Neither nginx nor Apache can express "symlinks that stay inside the app
+# root", and the alternative is no isolation between sites on one instance.
+disable_symlinks on from=\$document_root;
+
 # TLS terminates at Traefik and this server listens on a plain HTTP port, so an
 # absolute redirect would send the browser to the wrong scheme and an unexposed
 # port. Same reason the stock server sets this.
