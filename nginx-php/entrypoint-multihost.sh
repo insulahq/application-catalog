@@ -80,6 +80,14 @@ location ~ \.php\$ {
     # This is the nginx counterpart of `UseCanonicalName Off` on apache-php;
     # it must come AFTER the include, which is where the default is set.
     fastcgi_param  SERVER_NAME      \$host;
+    # Per-site PHP sandbox (open_basedir). A VARIABLE, not a literal, because
+    # nginx inherits fastcgi_param from an outer level ONLY when the inner
+    # level declares none — and this location declares several, so a
+    # server-level param would be silently dropped. Every generated server
+    # block sets it; a server that did not would be an UNSET variable, which
+    # nginx treats as a startup error, taking down every site in the pod
+    # rather than one. The platform's renderer therefore always emits it.
+    fastcgi_param  PHP_ADMIN_VALUE  \$insula_php_admin;
     fastcgi_buffers ${NGINX_FASTCGI_BUFFERS};
     fastcgi_buffer_size ${NGINX_FASTCGI_BUFFER_SIZE};
     fastcgi_read_timeout ${PHP_MAX_EXECUTION_TIME};
