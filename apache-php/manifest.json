@@ -13,6 +13,8 @@
         "web_root": "/var/www/html",
         "sites_root": "/var/www/sites",
         "config_dir": "/etc/apache2/insula/sites.d",
+        "common_include": "/etc/apache2/insula/site-common.conf",
+        "listen": 8080,
         "validate": [
             "apache2ctl",
             "configtest"

@@ -189,6 +189,16 @@
                     "type": "string",
                     "description": "Directory the image includes and the platform mounts the generated per-route vhost ConfigMap over."
                 },
+                "common_include": {
+                    "type": "string",
+                    "description": "Absolute path of the image's shared per-vhost include. Every generated vhost Includes it, which is what keeps a generated site and the stock vhost on identical real-IP, scheme and filesystem policy. Declared rather than derived from config_dir so a flavour may lay its files out differently."
+                },
+                "listen": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "Port the generated vhost listens on. Declared rather than taken from the ingress port so a service port that differs from the container port cannot silently produce vhosts on the wrong address."
+                },
                 "validate": {
                     "type": "array",
                     "items": {
@@ -211,6 +221,8 @@
                 "web_root",
                 "sites_root",
                 "config_dir",
+                "common_include",
+                "listen",
                 "validate",
                 "reload"
             ],
