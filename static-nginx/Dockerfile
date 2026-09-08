@@ -33,5 +33,16 @@ COPY nginx.conf /etc/nginx/conf.d/nginx.default.conf
 COPY --chown=1000:1000 user-include/ /etc/nginx/user-include/
 COPY --chown=1000:1000 docroot/ /var/www/html/
 
+# Multi-host: an include dir the platform mounts a ConfigMap over, plus the
+# directives every generated site shares. The include glob matches nothing
+# until something is mounted, and a wildcard include matching no files is not
+# an error in nginx — so this is inert on a single-site deployment.
+#
+# A distroless base has no shell, so sites.d is created by COPYing an empty
+# marker into it rather than with mkdir.
+COPY sites-include.conf /etc/nginx/conf.d/zz-insula-sites.conf
+COPY site-common.conf /etc/nginx/insula/site-common.conf
+COPY --chown=1000:1000 sites.d/ /etc/nginx/insula/sites.d/
+
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/nginx-workers"]
