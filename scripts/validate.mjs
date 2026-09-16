@@ -397,6 +397,65 @@ if (formatIssues === 0) {
     warn(`${formatIssues} manifest(s) have formatting issues`);
 }
 
+// ── PHP version matrix ───────────────────────────────────────────────────────
+//
+// build-images.yml builds the PHP runtimes once per version in its PHP_VERSIONS
+// list, and the catalog manifests advertise those same versions in
+// supportedVersions. When the two drift, the platform offers a tenant a PHP
+// version no image was ever built for — the deployment then fails on an image
+// pull, far from the manifest that promised it. The workflow has claimed
+// "ci-validate checks this" since the matrix was introduced; this is that check.
+//
+// Both lists are read out of the workflow itself, so adding a PHP version or a
+// third runtime stays a one-file change:
+//   PHP_VERSIONS: '["8.3",…]'          the versions each matrix image is built for
+//   changed='["apache-php",…]'          the images built by that matrix
+console.log('\n🐘 Checking PHP runtime version matrix...');
+
+const workflowPath = join(ROOT, '.github', 'workflows', 'build-images.yml');
+if (!existsSync(workflowPath)) {
+    warn('.github/workflows/build-images.yml not found — skipping PHP matrix check');
+} else {
+    const workflow = readFileSync(workflowPath, 'utf8');
+    const versionsMatch = workflow.match(/PHP_VERSIONS:\s*'(\[[^']*\])'/);
+    const imagesMatch = workflow.match(/changed='(\["[^']*\])'/);
+
+    if (!versionsMatch || !imagesMatch) {
+        error('could not read PHP_VERSIONS / the matrix image list out of build-images.yml');
+    } else {
+        const wantVersions = JSON.parse(versionsMatch[1]);
+        const matrixImages = JSON.parse(imagesMatch[1]);
+
+        for (const image of matrixImages) {
+            const manifestPath = join(ROOT, image, 'manifest.json');
+            if (!existsSync(manifestPath)) {
+                error(`build-images.yml builds "${image}" but ${image}/manifest.json does not exist`);
+                continue;
+            }
+            const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+            const declared = (manifest.supportedVersions ?? []).map((v) => v.version);
+
+            const missing = wantVersions.filter((v) => !declared.includes(v));
+            const extra = declared.filter((v) => !wantVersions.includes(v));
+            if (missing.length) {
+                error(`${image}: built for PHP ${missing.join(', ')} but supportedVersions does not offer it`);
+            }
+            if (extra.length) {
+                error(`${image}: supportedVersions offers PHP ${extra.join(', ')} but no image is built for it`);
+            }
+
+            const defaults = (manifest.supportedVersions ?? []).filter((v) => v.isDefault);
+            if (defaults.length !== 1) {
+                error(`${image}: needs exactly one isDefault version (found ${defaults.length}) — :latest tracks it`);
+            }
+
+            if (!missing.length && !extra.length && defaults.length === 1) {
+                ok(`${image}: PHP ${declared.join(', ')} (default ${defaults[0].version})`);
+            }
+        }
+    }
+}
+
 // ── Summary ──────────────────────────────────────────────────────────────────
 
 console.log('\n' + '─'.repeat(60));

@@ -1,0 +1,462 @@
+{
+    "name": "Apache + PHP (Office Tools)",
+    "code": "apache-php-office",
+    "type": "runtime",
+    "version": "8.4",
+    "description": "Everything in Apache + PHP, plus the document toolchain LMS and DMS applications shell out to: LibreOffice (headless), an unoconv-compatible converter, Ghostscript, pdftoppm, Graphviz, aspell and python3. Chosen for Moodle, where Annotate PDF feedback and document-to-PDF conversion need these binaries on disk.",
+    "category": "runtime",
+    "min_plan": "business",
+    "runtime": "php",
+    "web_server": "apache",
+    "multihost": {
+        "server": "apache",
+        "web_root": "/var/www/html",
+        "sites_root": "/var/www/sites",
+        "config_dir": "/etc/apache2/insula/sites.d",
+        "common_include": "/etc/apache2/insula/site-common.conf",
+        "listen": 8080,
+        "validate": [
+            "apache2ctl",
+            "configtest"
+        ],
+        "reload": [
+            "apache2ctl",
+            "graceful"
+        ],
+        "php": {
+            "open_basedir_extra": [
+                "/tmp"
+            ]
+        }
+    },
+    "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.4",
+    "has_dockerfile": true,
+    "deployment_strategy": "deployment",
+    "components": [
+        {
+            "name": "apache-php-office",
+            "type": "deployment",
+            "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.4",
+            "ports": [
+                {
+                    "port": 8080,
+                    "protocol": "TCP",
+                    "ingress": true
+                }
+            ]
+        }
+    ],
+    "networking": {
+        "ingress_ports": [
+            {
+                "port": 443,
+                "protocol": "TCP",
+                "tls": true,
+                "description": "Web traffic"
+            }
+        ],
+        "host_ports": [],
+        "websocket": false
+    },
+    "volumes": [
+        {
+            "local_path": ".",
+            "container_path": "/var/www/html",
+            "description": "Document root"
+        }
+    ],
+    "resources": {
+        "minimum": {
+            "cpu": "0.25",
+            "memory": "512Mi"
+        },
+        "recommended": {
+            "cpu": "0.50",
+            "memory": "1Gi"
+        }
+    },
+    "health_check": {
+        "path": "/healthcheck",
+        "command": null,
+        "port": 8080,
+        "initial_delay_seconds": 30,
+        "period_seconds": 30
+    },
+    "parameters": [
+        {
+            "key": "APACHE_DOCUMENT_ROOT",
+            "label": "Document Root",
+            "type": "string",
+            "default": "/var/www/html",
+            "description": "Web server document root path. Use /var/www/html/public for Laravel/Symfony."
+        },
+        {
+            "key": "PHP_DATE_TIMEZONE",
+            "label": "Timezone",
+            "type": "string",
+            "default": "UTC",
+            "description": "PHP default timezone (e.g. UTC, Europe/Berlin, America/New_York)."
+        },
+        {
+            "key": "PHP_DISPLAY_ERRORS",
+            "label": "Display Errors",
+            "type": "string",
+            "default": "Off",
+            "description": "Send PHP errors to the browser. Keep Off in production — On leaks file paths and query fragments to visitors.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_DISPLAY_STARTUP_ERRORS",
+            "label": "Display Startup Errors",
+            "type": "string",
+            "default": "Off",
+            "description": "Show errors raised during PHP's own startup. Keep Off in production.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_ERROR_LOG",
+            "label": "Error Log Destination",
+            "type": "string",
+            "default": "/dev/stderr",
+            "description": "Where PHP writes its error log. /dev/stderr surfaces errors in the deployment's Logs tab.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_ERROR_REPORTING",
+            "label": "Error Reporting Bitmask",
+            "type": "integer",
+            "default": 22527,
+            "description": "Which errors PHP reports. 22527 = E_ALL & ~E_DEPRECATED & ~E_STRICT (default), 32767 = E_ALL.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_FPM_PM_CONTROL",
+            "label": "FPM Process Manager",
+            "type": "string",
+            "default": "ondemand",
+            "description": "ondemand starts workers only when needed (lowest idle memory), dynamic keeps spares warm, static pins a fixed count.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_FPM_PM_MAX_CHILDREN",
+            "label": "FPM Max Workers",
+            "type": "integer",
+            "default": 5,
+            "description": "Maximum concurrent PHP workers, and the biggest memory lever here: each worker may grow to PHP Memory Limit. Raise it together with the deployment's memory.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_FPM_PM_MAX_REQUESTS",
+            "label": "FPM Requests Per Worker",
+            "type": "integer",
+            "default": 500,
+            "description": "Recycle a worker after this many requests, which bounds memory leaks in long-lived PHP processes. 0 never recycles.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_FPM_PM_MAX_SPARE_SERVERS",
+            "label": "FPM Max Spare Workers",
+            "type": "integer",
+            "default": 3,
+            "description": "Only used when FPM Process Manager is dynamic.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_FPM_PM_MIN_SPARE_SERVERS",
+            "label": "FPM Min Spare Workers",
+            "type": "integer",
+            "default": 1,
+            "description": "Only used when FPM Process Manager is dynamic.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_FPM_PM_START_SERVERS",
+            "label": "FPM Start Workers",
+            "type": "integer",
+            "default": 2,
+            "description": "Only used when FPM Process Manager is dynamic.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_MAX_EXECUTION_TIME",
+            "label": "Max Execution Time",
+            "type": "string",
+            "default": "99",
+            "description": "Maximum script execution time in seconds."
+        },
+        {
+            "key": "PHP_MAX_INPUT_TIME",
+            "label": "Max Input Parse Time",
+            "type": "integer",
+            "default": -1,
+            "description": "Seconds allowed for parsing request data. -1 means use Max Execution Time.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_MAX_INPUT_VARS",
+            "label": "Max Input Variables",
+            "type": "integer",
+            "default": 1000,
+            "description": "Maximum GET/POST variables per request. Large forms, bulk edits and product imports silently truncate at this limit — raise it if data goes missing on submit.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_MEMORY_LIMIT",
+            "label": "PHP Memory Limit",
+            "type": "string",
+            "default": "256M",
+            "description": "Maximum memory per PHP script (e.g. 128M, 256M, 512M)."
+        },
+        {
+            "key": "PHP_OPCACHE_ENABLE",
+            "label": "OPcache",
+            "type": "string",
+            "default": "1",
+            "description": "Enable PHP OPcache for better performance (1 = on, 0 = off)."
+        },
+        {
+            "key": "PHP_OPCACHE_ENABLE_FILE_OVERRIDE",
+            "label": "OPcache File Override",
+            "type": "integer",
+            "default": 0,
+            "description": "Let OPcache answer file_exists()/is_file() from its cache. Faster, but stale for files written at runtime.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_INTERNED_STRINGS_BUFFER",
+            "label": "OPcache Interned Strings (MB)",
+            "type": "integer",
+            "default": 8,
+            "description": "Memory for OPcache's shared string table.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_JIT",
+            "label": "OPcache JIT Mode",
+            "type": "string",
+            "default": "off",
+            "description": "JIT costs memory and rarely helps typical request/response web workloads. Leave off unless you have measured a gain.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_JIT_BUFFER_SIZE",
+            "label": "OPcache JIT Buffer (bytes)",
+            "type": "integer",
+            "default": 0,
+            "description": "Only meaningful when OPcache JIT Mode is not off.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_MAX_ACCELERATED_FILES",
+            "label": "OPcache Max Files",
+            "type": "integer",
+            "default": 10000,
+            "description": "Upper bound on cached PHP files. Large frameworks can exceed 10000.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_MEMORY_CONSUMPTION",
+            "label": "OPcache Memory (MB)",
+            "type": "integer",
+            "default": 64,
+            "description": "Shared memory claimed at startup for compiled PHP. 64 suits a typical site; large frameworks may want 128 — raise the deployment's memory alongside it.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_REVALIDATE_FREQ",
+            "label": "OPcache Revalidate (seconds)",
+            "type": "integer",
+            "default": 2,
+            "description": "How often OPcache re-checks a file's timestamp. Only used when OPcache Validate Timestamps is 1.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_SAVE_COMMENTS",
+            "label": "OPcache Keep Docblocks",
+            "type": "integer",
+            "default": 1,
+            "description": "Doctrine and other annotation-driven frameworks break without docblocks. 0 saves a little memory.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
+            "label": "OPcache Validate Timestamps",
+            "type": "integer",
+            "default": 1,
+            "description": "1 picks up edited files automatically. 0 is faster but every code change then needs a deployment restart.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_OPEN_BASEDIR",
+            "label": "Open Basedir",
+            "type": "string",
+            "default": "",
+            "description": "Restrict PHP's filesystem access to these paths (colon-separated). Empty means unrestricted. Setting it breaks apps that use /tmp unless /tmp is included.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_DISABLE_FUNCTIONS",
+            "label": "Disabled PHP Functions",
+            "type": "string",
+            "description": "Comma-separated PHP functions to disable for WEB requests only (FPM pool scope; CLI and cron keep them, so composer/wp-cli/occ still work). The platform sets this automatically on multi-host deployments, because open_basedir does not restrain a child process — shell_exec walks straight past it into a neighbouring site. Recommended: exec,shell_exec,system,passthru,popen,proc_open,pcntl_exec",
+            "advanced": true
+        },
+        {
+            "key": "PHP_POST_MAX_SIZE",
+            "label": "POST Max Size",
+            "type": "string",
+            "default": "100M",
+            "description": "Maximum size for POST request body (should be >= upload max)."
+        },
+        {
+            "key": "PHP_REALPATH_CACHE_TTL",
+            "label": "Realpath Cache TTL (seconds)",
+            "type": "integer",
+            "default": 120,
+            "description": "How long PHP caches resolved paths. Higher is faster but slower to notice moved files.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_SESSION_COOKIE_SECURE",
+            "label": "Secure Session Cookie",
+            "type": "boolean",
+            "default": false,
+            "description": "Send the session cookie only over HTTPS. Safe to enable — the platform terminates TLS at the edge and redirects HTTP.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_UPLOAD_MAX_FILE_SIZE",
+            "label": "Upload Max File Size",
+            "type": "string",
+            "default": "100M",
+            "description": "Maximum size for a single uploaded file."
+        },
+        {
+            "key": "PHP_ZEND_DETECT_UNICODE",
+            "label": "Zend Detect Unicode",
+            "type": "string",
+            "default": "",
+            "description": "Legacy Zend Multibyte setting. Leave empty unless you know you need it.",
+            "advanced": true
+        },
+        {
+            "key": "PHP_ZEND_MULTIBYTE",
+            "label": "Zend Multibyte",
+            "type": "string",
+            "default": "Off",
+            "description": "Legacy support for multibyte-encoded PHP source files. Leave Off unless you know you need it.",
+            "advanced": true
+        }
+    ],
+    "tags": [
+        "php",
+        "apache",
+        "web",
+        "htaccess",
+        "moodle",
+        "libreoffice",
+        "ghostscript",
+        "documents"
+    ],
+    "services": {
+        "database": {
+            "required": false,
+            "engines": [
+                {
+                    "type": "mariadb",
+                    "min_version": "10.4"
+                },
+                {
+                    "type": "mysql",
+                    "min_version": "5.7"
+                }
+            ],
+            "env_mapping": {
+                "host": "DB_HOST",
+                "port": "DB_PORT",
+                "name": "DB_NAME",
+                "user": "DB_USER",
+                "password": "DB_PASSWORD"
+            }
+        }
+    },
+    "env_vars": {
+        "configurable": [
+            "APACHE_DOCUMENT_ROOT",
+            "PHP_DATE_TIMEZONE",
+            "PHP_DISPLAY_ERRORS",
+            "PHP_DISPLAY_STARTUP_ERRORS",
+            "PHP_ERROR_LOG",
+            "PHP_ERROR_REPORTING",
+            "PHP_FPM_PM_CONTROL",
+            "PHP_FPM_PM_MAX_CHILDREN",
+            "PHP_FPM_PM_MAX_REQUESTS",
+            "PHP_FPM_PM_MAX_SPARE_SERVERS",
+            "PHP_FPM_PM_MIN_SPARE_SERVERS",
+            "PHP_FPM_PM_START_SERVERS",
+            "PHP_MAX_EXECUTION_TIME",
+            "PHP_MAX_INPUT_TIME",
+            "PHP_MAX_INPUT_VARS",
+            "PHP_MEMORY_LIMIT",
+            "PHP_OPCACHE_ENABLE",
+            "PHP_OPCACHE_ENABLE_FILE_OVERRIDE",
+            "PHP_OPCACHE_INTERNED_STRINGS_BUFFER",
+            "PHP_OPCACHE_JIT",
+            "PHP_OPCACHE_JIT_BUFFER_SIZE",
+            "PHP_OPCACHE_MAX_ACCELERATED_FILES",
+            "PHP_OPCACHE_MEMORY_CONSUMPTION",
+            "PHP_OPCACHE_REVALIDATE_FREQ",
+            "PHP_OPCACHE_SAVE_COMMENTS",
+            "PHP_OPCACHE_VALIDATE_TIMESTAMPS",
+            "PHP_OPEN_BASEDIR",
+            "PHP_POST_MAX_SIZE",
+            "PHP_REALPATH_CACHE_TTL",
+            "PHP_SESSION_COOKIE_SECURE",
+            "PHP_UPLOAD_MAX_FILE_SIZE",
+            "PHP_ZEND_DETECT_UNICODE",
+            "PHP_ZEND_MULTIBYTE"
+        ],
+        "fixed": {
+            "SSL_MODE": "off"
+        }
+    },
+    "supportedVersions": [
+        {
+            "version": "8.3",
+            "isDefault": false,
+            "upgradeFrom": [],
+            "components": [
+                {
+                    "name": "apache-php-office",
+                    "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.3"
+                }
+            ]
+        },
+        {
+            "version": "8.4",
+            "isDefault": true,
+            "upgradeFrom": [
+                "8.3"
+            ],
+            "components": [
+                {
+                    "name": "apache-php-office",
+                    "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.4"
+                }
+            ]
+        },
+        {
+            "version": "8.5",
+            "isDefault": false,
+            "upgradeFrom": [
+                "8.4"
+            ],
+            "components": [
+                {
+                    "name": "apache-php-office",
+                    "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.5"
+                }
+            ]
+        }
+    ]
+}
