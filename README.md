@@ -12,7 +12,7 @@ runtime/database/service catalog entries.
 
 | Type | Entries |
 |------|---------|
-| **runtime** | `apache-php`, `nginx-php`, `nodejs`, `bun-latest`, `python-312`, `ruby-33`, `golang-122`, `java-21`, `dotnet-8`, `rust-stable` |
+| **runtime** | `apache-php`, `apache-php-office`, `nginx-php`, `nodejs`, `bun-latest`, `python-312`, `ruby-33`, `golang-122`, `java-21`, `dotnet-8`, `rust-stable` |
 | **database** | `mariadb`, `mysql`, `postgresql`, `mongodb-7` |
 | **service** | `redis-7`, `memcached-alpine`, `minio` |
 | **static** | `static-nginx` (code `nginx`), `static-apache` (code `apache`) |

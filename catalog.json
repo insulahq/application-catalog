@@ -5,6 +5,7 @@
     "entries": [
         "nginx-php",
         "apache-php",
+        "apache-php-office",
         "static-nginx",
         "static-apache",
         "nodejs",

@@ -1,0 +1,160 @@
+#!/bin/sh
+# unoconv(1)-compatible shim over LibreOffice headless.
+#
+# Why a shim rather than the real thing: unoconv is not in Debian 13 (trixie)
+# and upstream has been unmaintained since 2018. Moodle's fileconverter_unoconv
+# is still the only document converter in core, and everything it asks of the
+# binary is small and fully specified in
+# public/files/converter/unoconv/classes/converter.php:
+#
+#   unoconv --version        is_minimum_version_met() runs this and matches
+#                            /unoconv (\d+\.\d+)/ against the output, requiring
+#                            >= 0.7.
+#   unoconv --show           fetch_supported_formats() proc_opens this with a
+#                            pipe on fd 2 ONLY — the list must go to STDERR or
+#                            Moodle reads an empty string — and scans it with
+#                            /\[\.(.*)\]/, so every format has to appear as
+#                            `[.ext]` on a line of its own. The result gates
+#                            BOTH the source and the target format of every
+#                            conversion, so an omission here reads to a teacher
+#                            as "this file type cannot be converted".
+#   unoconv -f FMT -o OUT IN start_document_conversion() runs this with cwd set
+#                            to a temp dir, then checks the exit code, that OUT
+#                            exists, and that it is non-empty.
+#
+# Real unoconv's listener mode, templates, doctype selection and stdout piping
+# are not used by Moodle and are deliberately not implemented — a flag we do not
+# understand is an error, never a silent no-op.
+set -eu
+
+# 0.9.0 is the last real unoconv release, and the version Moodle's >= 0.7 gate
+# is written against. The suffix keeps `unoconv --version` honest about what is
+# actually doing the work without disturbing Moodle's regex, which stops at the
+# second field.
+VERSION_LINE='unoconv 0.9.0 (LibreOffice shim, insula apache-php-office)'
+
+SOFFICE=/usr/bin/soffice
+# A conversion that never returns would otherwise hold a cron slot forever —
+# Moodle runs these as adhoc tasks, one after another.
+TIMEOUT="${UNOCONV_TIMEOUT:-180}"
+
+die() {
+    echo "unoconv: $*" >&2
+    exit 1
+}
+
+show_version() {
+    echo "$VERSION_LINE"
+    "$SOFFICE" --version 2>/dev/null | head -1 || true
+}
+
+# Written to STDERR on purpose: Moodle only opens a pipe on fd 2 (see above).
+# Every line ends in [.ext] because that is the whole of Moodle's parser.
+show_formats() {
+    cat >&2 <<'EOF'
+The following list of document formats are currently available:
+
+  csv      - Text CSV [.csv]
+  doc      - Microsoft Word 97/2000/XP [.doc]
+  docx     - Microsoft Word 2007-365 [.docx]
+  fodp     - OpenDocument Presentation (Flat XML) [.fodp]
+  fods     - OpenDocument Spreadsheet (Flat XML) [.fods]
+  fodt     - OpenDocument Text (Flat XML) [.fodt]
+  html     - HTML Document [.html]
+  odp      - OpenDocument Presentation [.odp]
+  ods      - OpenDocument Spreadsheet [.ods]
+  odt      - OpenDocument Text [.odt]
+  otp      - OpenDocument Presentation Template [.otp]
+  ots      - OpenDocument Spreadsheet Template [.ots]
+  ott      - OpenDocument Text Template [.ott]
+  pdf      - Portable Document Format [.pdf]
+  ppt      - Microsoft PowerPoint 97/2000/XP [.ppt]
+  pptx     - Microsoft PowerPoint 2007-365 [.pptx]
+  rtf      - Rich Text Format [.rtf]
+  txt      - Plain Text [.txt]
+  xls      - Microsoft Excel 97/2000/XP [.xls]
+  xlsx     - Microsoft Excel 2007-365 [.xlsx]
+EOF
+}
+
+format=
+output=
+input=
+
+# One input per call — that is what Moodle does, and a POSIX shell has no arrays
+# to hold several paths without word-splitting names like "my essay.docx".
+set_input() {
+    [ -z "$input" ] || die "exactly one input file is supported per call"
+    input="$1"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --version|-V) show_version; exit 0 ;;
+        --show) show_formats; exit 0 ;;
+        -h|--help)
+            echo "usage: unoconv -f FORMAT [-o OUTPUT] INPUT"
+            echo "       unoconv --version | --show"
+            exit 0
+            ;;
+        -f|--format) [ $# -ge 2 ] || die "option $1 requires an argument"; format="$2"; shift 2 ;;
+        --format=*) format="${1#--format=}"; shift ;;
+        -o|--output) [ $# -ge 2 ] || die "option $1 requires an argument"; output="$2"; shift 2 ;;
+        --output=*) output="${1#--output=}"; shift ;;
+        --) shift; [ $# -eq 0 ] || { set_input "$1"; shift; }; [ $# -eq 0 ] || die "exactly one input file is supported per call" ;;
+        -*) die "unsupported option: $1 (this is a LibreOffice shim, not full unoconv)" ;;
+        *) set_input "$1"; shift ;;
+    esac
+done
+
+[ -n "$format" ] || die "no output format given (-f)"
+[ -n "$input" ] || die "no input file given"
+
+workdir=
+cleanup() { [ -n "$workdir" ] && rm -rf "$workdir"; }
+trap cleanup EXIT INT TERM
+
+# One LibreOffice user profile per invocation. A shared profile makes two
+# concurrent conversions collide ("another instance is accessing"), and the
+# runtime's HOME is not writable for www-data anyway.
+workdir="$(mktemp -d)"
+profile="$workdir/profile"
+outdir="$workdir/out"
+mkdir -p "$profile" "$outdir"
+
+[ -f "$input" ] || die "input file not found: $input"
+
+rc=0
+HOME="$profile" timeout "$TIMEOUT" "$SOFFICE" \
+    --headless --norestore --nolockcheck --nodefault --nofirststartwizard \
+    -env:UserInstallation="file://$profile" \
+    --convert-to "$format" --outdir "$outdir" "$input" >/dev/null 2>&1 || rc=$?
+
+if [ "$rc" -eq 124 ]; then
+    die "conversion of '$input' timed out after ${TIMEOUT}s"
+elif [ "$rc" -ne 0 ]; then
+    die "LibreOffice exited with status $rc converting '$input' to $format"
+fi
+
+# soffice reports success even when it wrote nothing at all, so the output file
+# is the only trustworthy signal.
+stem="$(basename "$input")"
+stem="${stem%.*}"
+produced="$outdir/$stem.$format"
+if [ ! -f "$produced" ]; then
+    produced="$(find "$outdir" -maxdepth 1 -type f -name "*.$format" | head -1)"
+fi
+[ -n "$produced" ] && [ -f "$produced" ] || die "LibreOffice produced no $format output for '$input'"
+[ -s "$produced" ] || die "LibreOffice produced an empty $format file for '$input'"
+
+if [ -z "$output" ]; then
+    target="$(dirname "$input")/$stem.$format"
+elif [ -d "$output" ]; then
+    target="${output%/}/$stem.$format"
+else
+    target="$output"
+fi
+
+mv -f "$produced" "$target" || die "could not write '$target'"
+
+exit 0

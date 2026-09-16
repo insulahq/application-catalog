@@ -21,6 +21,11 @@ on:
       - 'apache-php/site-common.conf'
       - 'apache-php/sites-include.conf'
       - 'apache-php/.dockerignore'
+      - 'apache-php-office/Dockerfile'
+      - 'apache-php-office/unoconv'
+      - 'apache-php-office/.dockerignore'
+      - 'scripts/check-office-tools.sh'
+      - 'scripts/office-tools-probe.sh'
       - 'scripts/required-php-extensions.txt'
       - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
@@ -70,6 +75,11 @@ on:
       - 'apache-php/site-common.conf'
       - 'apache-php/sites-include.conf'
       - 'apache-php/.dockerignore'
+      - 'apache-php-office/Dockerfile'
+      - 'apache-php-office/unoconv'
+      - 'apache-php-office/.dockerignore'
+      - 'scripts/check-office-tools.sh'
+      - 'scripts/office-tools-probe.sh'
       - 'scripts/required-php-extensions.txt'
       - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
@@ -137,6 +147,9 @@ jobs:
       single: ${{ steps.split.outputs.single }}
       # PHP runtimes, built once per PHP version.
       php: ${{ steps.split.outputs.php }}
+      # apache-php-office — same version matrix, but built AFTER apache-php
+      # because it is FROM it.
+      office: ${{ steps.split.outputs.office }}
       php_versions: ${{ steps.split.outputs.versions }}
     steps:
       - uses: actions/checkout@v4
@@ -166,6 +179,22 @@ jobs:
               - 'apache-php/.dockerignore'
               - 'scripts/required-php-extensions.txt'
               - 'scripts/check-php-extensions.sh'
+              - '.github/workflows/build-images.yml'
+            # FROM apache-php, so every apache-php build input is an input here
+            # too — a new base has to reach the office image or the two drift.
+            apache-php-office:
+              - 'apache-php-office/Dockerfile'
+              - 'apache-php-office/unoconv'
+              - 'apache-php-office/.dockerignore'
+              - 'apache-php/Dockerfile'
+              - 'apache-php/vhost-extra.conf'
+              - 'apache-php/site-common.conf'
+              - 'apache-php/sites-include.conf'
+              - 'apache-php/.dockerignore'
+              - 'scripts/required-php-extensions.txt'
+              - 'scripts/check-php-extensions.sh'
+              - 'scripts/check-office-tools.sh'
+              - 'scripts/office-tools-probe.sh'
               - '.github/workflows/build-images.yml'
             static-nginx:
               - 'static-nginx/Dockerfile'
@@ -233,16 +262,19 @@ jobs:
           PHP_VERSIONS: ${{ env.PHP_VERSIONS }}
         run: |
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
-            changed='["apache-php","nginx-php"]'
+            changed='["apache-php","nginx-php","apache-php-office"]'
           else
             changed="${CHANGED:-[]}"
           fi
-          php=$(echo "$changed"   | jq -c '[.[] | select(. == "apache-php" or . == "nginx-php")]')
-          single=$(echo "$changed" | jq -c '[.[] | select(. != "apache-php" and . != "nginx-php")]')
+          php=$(echo "$changed"    | jq -c '[.[] | select(. == "apache-php" or . == "nginx-php")]')
+          office=$(echo "$changed" | jq -c '[.[] | select(. == "apache-php-office")]')
+          single=$(echo "$changed" | jq -c '[.[] | select(. != "apache-php" and . != "nginx-php" and . != "apache-php-office")]')
           echo "versions=$PHP_VERSIONS" >> "$GITHUB_OUTPUT"
           echo "php=$php"       >> "$GITHUB_OUTPUT"
+          echo "office=$office" >> "$GITHUB_OUTPUT"
           echo "single=$single" >> "$GITHUB_OUTPUT"
           echo "PHP matrix:    $php"
+          echo "Office matrix: $office"
           echo "Single images: $single"
 
   build:
@@ -441,6 +473,111 @@ jobs:
           # :<php>-<sha> is immutable and traceable. The bare :<php> tag is
           # what the catalog manifests reference. :latest only for the
           # manifest's default version.
+          tags="${{ matrix.php }}-${{ github.sha }} ${{ matrix.php }}"
+          if [ "${{ matrix.php }}" = "${{ steps.default.outputs.version }}" ]; then
+            tags="$tags latest"
+          fi
+          for t in $tags; do
+            docker tag "$LOCAL" "$REPO:$t"
+            docker push "$REPO:$t"
+            echo "pushed $REPO:$t"
+          done
+
+  # apache-php-office is FROM apache-php, so it builds AFTER it: on a push where
+  # both changed, the office image has to pick up the base that was just
+  # published, not last week's. `always()` keeps this job running when build-php
+  # was skipped entirely — the case where only the office files changed.
+  #
+  # On pull requests the base is pulled from GHCR as last published, so a PR that
+  # edits apache-php's Dockerfile is NOT what this job builds on. That is a
+  # deliberate trade: the alternative is building the base twice on every PR.
+  build-php-office:
+    name: Build apache-php-office (PHP ${{ matrix.php }})
+    needs: [detect, build-php]
+    if: >-
+      always() &&
+      needs.detect.result == 'success' &&
+      needs.detect.outputs.office != '[]' &&
+      needs.build-php.result != 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(needs.detect.outputs.php_versions) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # `:latest` must track exactly ONE PHP version — the manifest names it.
+      - name: Resolve default PHP version
+        id: default
+        run: |
+          default_version=$(jq -r '.supportedVersions[] | select(.isDefault == true) | .version' \
+            apache-php-office/manifest.json)
+          if [ -z "$default_version" ] || [ "$default_version" = "null" ]; then
+            echo "::error::apache-php-office/manifest.json declares no isDefault version"
+            exit 1
+          fi
+          echo "version=$default_version" >> "$GITHUB_OUTPUT"
+          echo "Default PHP version for apache-php-office: $default_version"
+
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (load locally)
+        uses: docker/build-push-action@v6
+        with:
+          context: apache-php-office
+          build-args: PHP_VERSION=${{ matrix.php }}
+          load: true
+          tags: local/apache-php-office:${{ matrix.php }}
+          cache-from: type=gha,scope=apache-php-office-${{ matrix.php }}
+          cache-to: type=gha,scope=apache-php-office-${{ matrix.php }},mode=max
+
+      # The base's extension set must survive the apt layer on top of it —
+      # asserted against this image, not inherited on trust.
+      - name: Assert required PHP extensions
+        run: scripts/check-php-extensions.sh local/apache-php-office:${{ matrix.php }}
+
+      # The gate this image exists for: a real document conversion, a real
+      # Ghostscript rasterisation, as www-data.
+      - name: Assert office toolchain
+        run: scripts/check-office-tools.sh local/apache-php-office:${{ matrix.php }}
+
+      - name: Smoke test the runtime
+        run: |
+          set -euo pipefail
+          cid=$(docker run -d -p 18080:8080 \
+                  -e APACHE_DOCUMENT_ROOT=/var/www/html \
+                  local/apache-php-office:${{ matrix.php }})
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/healthcheck >/dev/null 2>&1; then
+              echo "healthcheck OK after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::apache-php-office ${{ matrix.php }} never became healthy"
+          docker logs "$cid" | tail -50
+          exit 1
+
+      - name: Push
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          REPO: ghcr.io/${{ github.repository }}/apache-php-office
+          LOCAL: local/apache-php-office:${{ matrix.php }}
+        run: |
+          set -euo pipefail
           tags="${{ matrix.php }}-${{ github.sha }} ${{ matrix.php }}"
           if [ "${{ matrix.php }}" = "${{ steps.default.outputs.version }}" ]; then
             tags="$tags latest"

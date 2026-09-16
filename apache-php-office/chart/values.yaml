@@ -1,0 +1,31 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/insulahq/application-catalog/apache-php-office
+  tag: "8.4"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: nginx
+  domain: ""
+  tls: true
+
+resources:
+  requests:
+    cpu: 0.25
+    memory: 512Mi
+  limits:
+    cpu: 1
+    memory: 1Gi
+
+persistence:
+  enabled: true
+  mountPath: "/var/www/html"
+  size: 5Gi
+
+env: {}

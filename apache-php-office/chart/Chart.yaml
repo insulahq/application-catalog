@@ -1,0 +1,6 @@
+apiVersion: v2
+name: apache-php-office
+description: Apache + PHP-FPM with LibreOffice, Ghostscript and an unoconv-compatible converter for Moodle and other document-converting PHP applications
+type: application
+version: 0.1.0
+appVersion: "8.4"
