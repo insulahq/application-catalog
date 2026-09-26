@@ -57,7 +57,7 @@
     ],
     "resources": {
         "minimum": {
-            "cpu": "0.25",
+            "cpu": "0.05",
             "memory": "512Mi",
             "storage": "1Gi"
         },
