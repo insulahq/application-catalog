@@ -63,7 +63,7 @@
     ],
     "resources": {
         "minimum": {
-            "cpu": "0.10",
+            "cpu": "0.01",
             "memory": "32Mi"
         },
         "recommended": {
