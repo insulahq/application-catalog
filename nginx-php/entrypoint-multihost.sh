@@ -70,6 +70,12 @@ absolute_redirect off;
 # weaker posture than the single-site server in the same image.
 include /etc/nginx/server-opts.d/*.conf;
 
+# Real client IP — the same trusted-proxy preset the stock server includes
+# (TRUSTED_PROXY, which the image sets to "local"). The real_ip_* directives are
+# per server, so without this line every visitor to a multi-host site is
+# logged, rate-limited and handed to PHP as Traefik's pod address.
+include /etc/nginx/trusted-proxy/${TRUSTED_PROXY}.conf;
+
 location / {
     try_files \$uri \$uri/ /index.php?\$query_string;
 }
