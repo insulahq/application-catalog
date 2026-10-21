@@ -40,16 +40,29 @@ RUN install-php-extensions \
  && rm -rf /tmp/* /var/tmp/*
 
 # Real client IP behind the platform's Traefik ingress. The upstream image
-# already trusts the private CIDRs (the pod network lives in 10.0.0.0/8) and
-# already sets `absolute_redirect off`, so the only wrong piece is the header
-# name — it defaults to Cloudflare's, which no request here carries. Rewrite
-# that one line rather than adding a second directive: nginx rejects a
-# duplicate real_ip_header in the same context.
-RUN sed -i 's|^real_ip_header .*|real_ip_header X-Forwarded-For;|' \
-      /etc/nginx/server-opts.d/remoteip.conf \
- && grep -q '^real_ip_header X-Forwarded-For;$' /etc/nginx/server-opts.d/remoteip.conf
+# takes its real-IP rules from /etc/nginx/trusted-proxy/${TRUSTED_PROXY}.conf,
+# included by the stock server, and defaults to `cloudflare` — whose
+# CF-Connecting-IP header no request here carries. `local` is the preset this
+# platform needs: it trusts the private ranges (the pod network lives in
+# 10.0.0.0/8), reads X-Forwarded-For and walks the chain right to left, so a
+# forged prefix never wins.
+#
+# Asserted, not assumed: upstream already moved this once (it used to be
+# server-opts.d/remoteip.conf, which this file rewrote with sed), and that
+# move broke every build of this image. The next move has to fail here too
+# rather than ship a runtime that logs Traefik as every visitor. The multi-host
+# sites include the same preset — see entrypoint-multihost.sh.
+ENV TRUSTED_PROXY=local
+RUN grep -q '^real_ip_header X-Forwarded-For;$' /etc/nginx/trusted-proxy/local.conf \
+ && grep -q '^real_ip_recursive on;$' /etc/nginx/trusted-proxy/local.conf \
+ && grep -q '^set_real_ip_from 10.0.0.0/8;$' /etc/nginx/trusted-proxy/local.conf \
+ && for t in http https; do \
+      grep -qF 'include /etc/nginx/trusted-proxy/${TRUSTED_PROXY}.conf;' \
+        "/etc/nginx/site-opts.d/$t.conf.template" \
+        || { echo "site-opts.d/$t.conf.template no longer includes the trusted-proxy preset — upstream layout changed"; exit 1; }; \
+    done
 
-# Scheme the VISITOR used. remoteip.conf above fixes WHO the client is; this
+# Scheme the VISITOR used. The trusted-proxy preset above fixes WHO the client is; this
 # fixes WHAT SCHEME they used, which the upstream image gets wrong behind a
 # TLS-terminating proxy (nginx's $https is empty, so `HTTPS` is never sent to
 # PHP). See scheme.conf for the measured symptom and the trust model.
