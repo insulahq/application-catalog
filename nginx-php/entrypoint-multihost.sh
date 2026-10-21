@@ -35,6 +35,12 @@ case "${NGINX_LISTEN_IP_PROTOCOL}" in
     ipv6) insula_listen="listen [::]:${NGINX_HTTP_PORT};" ;;
 esac
 
+# The heredoc is UNQUOTED because it has to expand the values above — which
+# makes every backtick and every bare $name in it live shell, comments
+# included: a backtick runs its contents as a command at each container start,
+# and $name becomes an empty string. Write nginx variables as \$name, quote
+# with "double quotes", never backticks. The image build renders this file
+# once and fails on any stderr (nginx-php/Dockerfile).
 cat > "$insula_sites_dir/site-common.conf" <<INSULA_SITE_COMMON
 # GENERATED AT CONTAINER STARTUP by /etc/entrypoint.d/60-insula-multihost.sh.
 # Edits are lost on restart — change the deployment's environment instead.
@@ -47,15 +53,15 @@ charset utf-8;
 # pointing at a sibling's is served by NGINX directly — open_basedir and
 # disable_functions are PHP controls and never see such a request, so both are
 # bypassed. Reproduced against this image: the sibling's config file came back
-# as text/plain with PHP never invoked. `location ~ \.php$` matches the
+# as text/plain with PHP never invoked. "location ~ \.php\$" matches the
 # REQUESTED name, not the target, so any other extension skips FPM entirely.
 #
-# `from=$document_root` checks the components below the document root, where
+# "from=\$document_root" checks the components below the document root, where
 # such a symlink sits, without failing on a link higher up the mount path.
-# `if_not_owner` would be a no-op here: every file has the same runtime uid.
+# "if_not_owner" would be a no-op here: every file has the same runtime uid.
 #
 # COST, deliberately accepted: an app shipping a symlink under its document
-# root (Laravel's `public/storage`) stops resolving it — use a real directory.
+# root (Laravel's public/storage) stops resolving it — use a real directory.
 # Neither nginx nor Apache can express "symlinks that stay inside the app
 # root", and the alternative is no isolation between sites on one instance.
 disable_symlinks on from=\$document_root;
@@ -100,7 +106,7 @@ location ~ \.php\$ {
     # SERVER_NAME "*.apps.example.test" — not a hostname at all, and any
     # framework building URLs from it emits links nobody can follow. \$host is
     # the request's Host header (falling back to server_name when absent).
-    # This is the nginx counterpart of `UseCanonicalName Off` on apache-php;
+    # This is the nginx counterpart of "UseCanonicalName Off" on apache-php;
     # it must come AFTER the include, which is where the default is set.
     fastcgi_param  SERVER_NAME      \$host;
     # Per-site PHP sandbox (open_basedir). A VARIABLE, not a literal, because

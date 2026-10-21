@@ -26,6 +26,7 @@ on:
       - 'apache-php-office/.dockerignore'
       - 'scripts/check-office-tools.sh'
       - 'scripts/office-tools-probe.sh'
+      - 'scripts/resolve-office-base.sh'
       - 'scripts/required-php-extensions.txt'
       - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
@@ -80,6 +81,7 @@ on:
       - 'apache-php-office/.dockerignore'
       - 'scripts/check-office-tools.sh'
       - 'scripts/office-tools-probe.sh'
+      - 'scripts/resolve-office-base.sh'
       - 'scripts/required-php-extensions.txt'
       - 'scripts/check-php-extensions.sh'
       - 'static-nginx/Dockerfile'
@@ -126,12 +128,18 @@ on:
   schedule:
     - cron: '17 4 * * 1'
 
-  # Manual rebuild. Pushes only from main (see should_push below).
+  # Manual rebuild. Pushes only from main (see the push conditions below).
   workflow_dispatch:
 
+# Pull requests: a new push to the branch supersedes the previous check run, so
+# cancel it whole. Everything else gets a group of its own, because a run-wide
+# cancel on main loses builds: the newer run only builds what ITS push changed,
+# so the images the cancelled run was building were never built at all. On
+# main, newer-supersedes-older is decided per image instead — see the job-level
+# `concurrency` on each build job.
 concurrency:
-  group: build-images-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'pull_request' && format('build-images-{0}', github.ref) || format('build-images-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Every PHP version the apache-php / nginx-php manifests offer. Keep in
@@ -195,6 +203,7 @@ jobs:
               - 'scripts/check-php-extensions.sh'
               - 'scripts/check-office-tools.sh'
               - 'scripts/office-tools-probe.sh'
+              - 'scripts/resolve-office-base.sh'
               - '.github/workflows/build-images.yml'
             static-nginx:
               - 'static-nginx/Dockerfile'
@@ -277,6 +286,12 @@ jobs:
           echo "Office matrix: $office"
           echo "Single images: $single"
 
+  # Every build job below is isolated per image (and per PHP version):
+  #   - fail-fast: false — one image failing never stops another's leg;
+  #   - job-level concurrency keyed on the image — a newer run building the
+  #     SAME image cancels the older one (its tree contains the older commit's
+  #     changes, and it stops two runs racing for the same moving tag), while a
+  #     run building a DIFFERENT image leaves it alone.
   build:
     name: Build ${{ matrix.image }}
     needs: detect
@@ -285,6 +300,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    concurrency:
+      group: build-images-${{ github.ref }}-${{ matrix.image }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -343,6 +361,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    concurrency:
+      group: build-images-${{ github.ref }}-${{ matrix.image }}-${{ matrix.php }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -418,7 +439,7 @@ jobs:
       # Real-IP assertion against the BUILT IMAGE. Previously this lived in
       # scripts/test-real-client-ip.sh and mounted a standalone config file;
       # the handling now lives inside the image (an appended vhost include for
-      # Apache, a rewritten real_ip_header for NGINX), so the only meaningful
+      # Apache, upstream's TRUSTED_PROXY=local preset for NGINX), so the only meaningful
       # test is against the artefact. The runner reaches the container over the
       # docker bridge (172.17.0.0/16), which is inside the trusted proxy CIDRs
       # — the same shape as Traefik's pod address.
@@ -485,8 +506,16 @@ jobs:
 
   # apache-php-office is FROM apache-php, so it builds AFTER it: on a push where
   # both changed, the office image has to pick up the base that was just
-  # published, not last week's. `always()` keeps this job running when build-php
-  # was skipped entirely — the case where only the office files changed.
+  # published, not last week's.
+  #
+  # It depends on ITS OWN base only — apache-php at the same PHP version — never
+  # on the build-php job as a whole. That job is one matrix with nginx-php in it,
+  # and its result is "failure" if any leg fails: gating on it once kept every
+  # office version stale for weeks because nginx-php could not build. So this
+  # job waits for build-php to finish (whatever its result), then each leg
+  # checks for the exact base it needs — see "Resolve base image".
+  # `!cancelled()` keeps it running when build-php failed or was skipped (only
+  # office files changed), but not when the run itself was cancelled.
   #
   # On pull requests the base is pulled from GHCR as last published, so a PR that
   # edits apache-php's Dockerfile is NOT what this job builds on. That is a
@@ -495,14 +524,16 @@ jobs:
     name: Build apache-php-office (PHP ${{ matrix.php }})
     needs: [detect, build-php]
     if: >-
-      always() &&
+      !cancelled() &&
       needs.detect.result == 'success' &&
-      needs.detect.outputs.office != '[]' &&
-      needs.build-php.result != 'failure'
+      needs.detect.outputs.office != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    concurrency:
+      group: build-images-${{ github.ref }}-apache-php-office-${{ matrix.php }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
@@ -510,10 +541,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Which apache-php to build on, per PHP version:
+      #   - a run that pushes (main) and rebuilt apache-php: exactly the image
+      #     that run published, by its immutable :<php>-<sha> tag. If that tag is
+      #     missing, this version's apache-php leg failed or a newer run
+      #     superseded it — skip with a warning rather than ship office on a
+      #     stale base. The failed leg already turns the run red, and a newer
+      #     run that rebuilt apache-php rebuilds office too (office's path
+      #     filter includes every apache-php input).
+      #   - anything else (PRs, branch dispatches, office-only changes): the
+      #     published :<php>, which is current.
+      - name: Resolve base image
+        id: base
+        env:
+          PUSHES: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+          PHP_IMAGES: ${{ needs.detect.outputs.php }}
+          BASE_REPO: ghcr.io/${{ github.repository }}/apache-php
+          PHP: ${{ matrix.php }}
+          SHA: ${{ github.sha }}
+        run: scripts/resolve-office-base.sh
+
       - uses: docker/setup-buildx-action@v3
+        if: steps.base.outputs.build == 'true'
 
       # `:latest` must track exactly ONE PHP version — the manifest names it.
       - name: Resolve default PHP version
+        if: steps.base.outputs.build == 'true'
         id: default
         run: |
           default_version=$(jq -r '.supportedVersions[] | select(.isDefault == true) | .version' \
@@ -526,7 +579,7 @@ jobs:
           echo "Default PHP version for apache-php-office: $default_version"
 
       - name: Login to GHCR
-        if: github.event_name != 'pull_request'
+        if: steps.base.outputs.build == 'true' && github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -534,10 +587,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build (load locally)
+        if: steps.base.outputs.build == 'true'
         uses: docker/build-push-action@v6
         with:
           context: apache-php-office
-          build-args: PHP_VERSION=${{ matrix.php }}
+          build-args: |
+            PHP_VERSION=${{ matrix.php }}
+            BASE_TAG=${{ steps.base.outputs.tag }}
           load: true
           tags: local/apache-php-office:${{ matrix.php }}
           cache-from: type=gha,scope=apache-php-office-${{ matrix.php }}
@@ -546,14 +602,17 @@ jobs:
       # The base's extension set must survive the apt layer on top of it —
       # asserted against this image, not inherited on trust.
       - name: Assert required PHP extensions
+        if: steps.base.outputs.build == 'true'
         run: scripts/check-php-extensions.sh local/apache-php-office:${{ matrix.php }}
 
       # The gate this image exists for: a real document conversion, a real
       # Ghostscript rasterisation, as www-data.
       - name: Assert office toolchain
+        if: steps.base.outputs.build == 'true'
         run: scripts/check-office-tools.sh local/apache-php-office:${{ matrix.php }}
 
       - name: Smoke test the runtime
+        if: steps.base.outputs.build == 'true'
         run: |
           set -euo pipefail
           cid=$(docker run -d -p 18080:8080 \
@@ -572,7 +631,7 @@ jobs:
           exit 1
 
       - name: Push
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: steps.base.outputs.build == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           REPO: ghcr.io/${{ github.repository }}/apache-php-office
           LOCAL: local/apache-php-office:${{ matrix.php }}
