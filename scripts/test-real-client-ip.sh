@@ -80,8 +80,8 @@ grep -q 'via=' <<<"$AL" && printf '  ✓ %-44s %s\n' "delivering proxy still log
 
 # The PHP runtimes (apache-php / nginx-php) are NOT tested here any more.
 # They no longer ship a standalone config file to mount — the real-IP handling
-# now lives inside the built image (an appended vhost include for Apache, a
-# rewritten real_ip_header for NGINX). Testing a config file we no longer ship
+# now lives inside the built image (an appended vhost include for Apache,
+# upstream's TRUSTED_PROXY=local preset for NGINX). Testing a config file we no longer ship
 # would prove nothing about the artefact, so the equivalent assertions run in
 # .github/workflows/build-images.yml against the actual built image, right
 # after the extension check. See the "Assert real client IP" step there.

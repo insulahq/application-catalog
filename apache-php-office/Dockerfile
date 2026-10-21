@@ -13,8 +13,14 @@
 # overrides and the FPM pool hardening is a second thing to keep in sync, and
 # the last time an extension quietly went missing it took months to notice.
 # build-images.yml therefore builds this image AFTER apache-php, per PHP version.
+#
+# BASE_TAG pins the exact base. When CI rebuilds apache-php in the same run it
+# passes the immutable :<php>-<sha> tag that build just pushed, so a moving
+# :<php> tag can never hand this image a different base. Everywhere else
+# (local builds, PRs) it falls back to the published :<php>.
 ARG PHP_VERSION=8.4
-FROM ghcr.io/insulahq/application-catalog/apache-php:${PHP_VERSION}
+ARG BASE_TAG=${PHP_VERSION}
+FROM ghcr.io/insulahq/application-catalog/apache-php:${BASE_TAG}
 
 USER root
 

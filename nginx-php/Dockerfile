@@ -131,6 +131,17 @@ RUN mkdir -p /etc/nginx/insula/sites.d \
  && chown -R www-data:www-data /etc/nginx/insula \
  && chmod +x /etc/entrypoint.d/60-insula-multihost.sh
 
+# That script writes site-common.conf through an UNQUOTED heredoc, so a stray
+# backtick in it — even in a comment — runs as a command at every container
+# start ("location: not found" in the pod log was how this surfaced). Render it
+# once here and fail on any stderr, then drop the render: the real one is
+# written at startup from the deployment's environment.
+RUN err=$(sh /etc/entrypoint.d/60-insula-multihost.sh 2>&1 >/dev/null) \
+ && rm -f /etc/nginx/insula/site-common.conf \
+ && if [ -n "$err" ]; then \
+      echo "60-insula-multihost.sh wrote to stderr while rendering:"; echo "$err"; exit 1; \
+    fi
+
 
 # --- Per-request PHP hardening for multi-host serving -------------------------
 # `open_basedir` sandboxes a site's PHP to its own app root, but it does NOT
