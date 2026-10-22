@@ -18,7 +18,7 @@
 # passes the immutable :<php>-<sha> tag that build just pushed, so a moving
 # :<php> tag can never hand this image a different base. Everywhere else
 # (local builds, PRs) it falls back to the published :<php>.
-ARG PHP_VERSION=8.4
+ARG PHP_VERSION=8.5
 ARG BASE_TAG=${PHP_VERSION}
 FROM ghcr.io/insulahq/application-catalog/apache-php:${BASE_TAG}
 

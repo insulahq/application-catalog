@@ -8,7 +8,7 @@
 # Note the alpine base ships an even leaner extension set than the Debian
 # one — it has no mysqli at all, only pdo_mysql, which breaks WordPress and
 # most legacy PHP outright.
-ARG PHP_VERSION=8.4
+ARG PHP_VERSION=8.5
 FROM serversideup/php:${PHP_VERSION}-fpm-nginx-alpine
 
 USER root

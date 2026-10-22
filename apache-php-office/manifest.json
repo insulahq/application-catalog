@@ -2,7 +2,7 @@
     "name": "Apache + PHP (Office Tools)",
     "code": "apache-php-office",
     "type": "runtime",
-    "version": "8.4",
+    "version": "8.5",
     "description": "Everything in Apache + PHP, plus the document toolchain LMS and DMS applications shell out to: LibreOffice (headless), an unoconv-compatible converter, Ghostscript, pdftoppm, Graphviz, aspell and python3. Chosen for Moodle, where Annotate PDF feedback and document-to-PDF conversion need these binaries on disk.",
     "category": "runtime",
     "min_plan": "business",
@@ -29,14 +29,14 @@
             ]
         }
     },
-    "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.4",
+    "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.5",
     "has_dockerfile": true,
     "deployment_strategy": "deployment",
     "components": [
         {
             "name": "apache-php-office",
             "type": "deployment",
-            "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.4",
+            "image": "ghcr.io/insulahq/application-catalog/apache-php-office:8.5",
             "ports": [
                 {
                     "port": 8080,
@@ -434,7 +434,7 @@
         },
         {
             "version": "8.4",
-            "isDefault": true,
+            "isDefault": false,
             "upgradeFrom": [
                 "8.3"
             ],
@@ -447,7 +447,7 @@
         },
         {
             "version": "8.5",
-            "isDefault": false,
+            "isDefault": true,
             "upgradeFrom": [
                 "8.4"
             ],
