@@ -12,7 +12,7 @@
 # soap, … and no mysqli at all on the nginx-alpine variant), which fails a
 # large share of real PHP applications. Platform architecture §2.8 calls for
 # shipping one fat image covering the common cases.
-ARG PHP_VERSION=8.4
+ARG PHP_VERSION=8.5
 FROM serversideup/php:${PHP_VERSION}-fpm-apache
 
 USER root

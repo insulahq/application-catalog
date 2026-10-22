@@ -2,7 +2,7 @@
     "name": "NGINX + PHP",
     "code": "nginx-php",
     "type": "runtime",
-    "version": "8.4",
+    "version": "8.5",
     "description": "NGINX web server with PHP-FPM for modern PHP applications. Ships gd, imagick, imap, intl, soap, ldap, bcmath, gmp, exif, xsl, mysqli, pgsql, memcached, apcu and redis.",
     "category": "runtime",
     "min_plan": "starter",
@@ -30,14 +30,14 @@
             ]
         }
     },
-    "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.4",
+    "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.5",
     "has_dockerfile": true,
     "deployment_strategy": "deployment",
     "components": [
         {
             "name": "nginx-php",
             "type": "deployment",
-            "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.4",
+            "image": "ghcr.io/insulahq/application-catalog/nginx-php:8.5",
             "ports": [
                 {
                     "port": 8080,
@@ -430,7 +430,7 @@
         },
         {
             "version": "8.4",
-            "isDefault": true,
+            "isDefault": false,
             "upgradeFrom": [
                 "8.3"
             ],
@@ -443,7 +443,7 @@
         },
         {
             "version": "8.5",
-            "isDefault": false,
+            "isDefault": true,
             "upgradeFrom": [
                 "8.4"
             ],
