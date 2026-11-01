@@ -1,6 +1,9 @@
 FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+  && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir gunicorn \

@@ -111,25 +111,9 @@
     },
     "supportedVersions": [
         {
-            "version": "20",
-            "isDefault": false,
-            "upgradeFrom": [],
-            "tags": [
-                "lts"
-            ],
-            "components": [
-                {
-                    "name": "nodejs",
-                    "image": "ghcr.io/insulahq/application-catalog/nodejs:20"
-                }
-            ]
-        },
-        {
             "version": "22",
             "isDefault": true,
-            "upgradeFrom": [
-                "20"
-            ],
+            "upgradeFrom": [],
             "components": [
                 {
                     "name": "nodejs",

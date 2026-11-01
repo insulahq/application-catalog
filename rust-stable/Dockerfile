@@ -1,6 +1,9 @@
 FROM rust:1.85-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+  && apt-get install -y --no-install-recommends \
     ca-certificates curl pkg-config libssl-dev \
   && rm -rf /var/lib/apt/lists/* \
   && useradd -u 1000 -ms /bin/bash webuser \

@@ -1,6 +1,9 @@
 FROM ruby:3.3-alpine
 
-RUN apk add --no-cache \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apk upgrade --no-cache \
+  && apk add --no-cache \
     build-base \
     libpq-dev \
     mariadb-dev \

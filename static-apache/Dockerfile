@@ -19,7 +19,10 @@ RUN mkdir -p /usr/local/apache2/conf/insula/sites.d
 COPY config-readme.txt /usr/local/share/apache-config-readme.txt
 COPY docker-entrypoint.sh /usr/local/bin/apache-entry
 
-RUN adduser -D -u 1000 webuser \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apk upgrade --no-cache \
+  && adduser -D -u 1000 webuser \
   && chown -R webuser:webuser /usr/local/apache2/htdocs \
   && chmod +x /usr/local/bin/apache-entry
 

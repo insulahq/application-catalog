@@ -3,7 +3,10 @@ FROM oven/bun:1.2
 # oven/bun base image already has user `bun` at UID 1000 — reuse rather
 # than creating a conflicting webuser.
 USER root
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+  && apt-get install -y --no-install-recommends \
     curl \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /app && chown -R bun:bun /app
