@@ -1,6 +1,9 @@
 FROM golang:1.22-alpine
 
-RUN apk add --no-cache git ca-certificates curl \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apk upgrade --no-cache \
+  && apk add --no-cache git ca-certificates curl \
   && adduser -D -u 1000 webuser \
   && mkdir -p /app && chown -R webuser:webuser /app
 

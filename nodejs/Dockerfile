@@ -1,6 +1,9 @@
 FROM node:22-alpine
 
-RUN apk add --no-cache curl \
+# Upgrade the base's own packages first: upstream rebuilds a floating tag on its
+# own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+RUN apk upgrade --no-cache \
+  && apk add --no-cache curl \
   && mkdir -p /app && chown node:node /app
 
 WORKDIR /app
