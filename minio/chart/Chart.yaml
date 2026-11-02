@@ -1,6 +1,0 @@
-apiVersion: v2
-name: minio
-description: S3-compatible object storage for file uploads, media, and backups
-type: application
-version: 0.1.0
-appVersion: "2025-02-28"
