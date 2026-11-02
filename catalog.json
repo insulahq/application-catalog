@@ -21,7 +21,6 @@
         "postgresql",
         "mongodb-7",
         "redis-7",
-        "memcached-alpine",
-        "minio"
+        "memcached-alpine"
     ]
 }
