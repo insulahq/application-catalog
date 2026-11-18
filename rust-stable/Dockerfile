@@ -2,6 +2,9 @@ FROM rust:1.85-slim
 
 # Upgrade the base's own packages first: upstream rebuilds a floating tag on its
 # own schedule, and a tag nobody rebuilds any more keeps its CVEs.
+# The weekly rebuild covers only the PHP runtimes, so this image is rebuilt only
+# when this file changes. When the platform's image scan finds a fixed Debian CVE
+# in it, a change here is what ships the fix.
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y --no-install-recommends \
     ca-certificates curl pkg-config libssl-dev \
