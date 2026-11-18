@@ -409,7 +409,7 @@ if (formatIssues === 0) {
 // Both lists are read out of the workflow itself, so adding a PHP version or a
 // third runtime stays a one-file change:
 //   PHP_VERSIONS: '["8.3",…]'          the versions each matrix image is built for
-//   changed='["apache-php",…]'          the images built by that matrix
+//   PHP_MATRIX_IMAGES: '["apache-php",…]'  the images built by that matrix
 console.log('\n🐘 Checking PHP runtime version matrix...');
 
 const workflowPath = join(ROOT, '.github', 'workflows', 'build-images.yml');
@@ -418,7 +418,7 @@ if (!existsSync(workflowPath)) {
 } else {
     const workflow = readFileSync(workflowPath, 'utf8');
     const versionsMatch = workflow.match(/PHP_VERSIONS:\s*'(\[[^']*\])'/);
-    const imagesMatch = workflow.match(/changed='(\["[^']*\])'/);
+    const imagesMatch = workflow.match(/PHP_MATRIX_IMAGES:\s*'(\[[^']*\])'/);
 
     if (!versionsMatch || !imagesMatch) {
         error('could not read PHP_VERSIONS / the matrix image list out of build-images.yml');

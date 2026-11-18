@@ -148,6 +148,9 @@ env:
   # Every PHP version the apache-php / nginx-php manifests offer. Keep in
   # sync with their supportedVersions arrays — ci-validate checks this.
   PHP_VERSIONS: '["8.3","8.4","8.5"]'
+  # The images built once per PHP_VERSIONS entry (apache-php-office in its own
+  # job, after apache-php). ci-validate reads this list too.
+  PHP_MATRIX_IMAGES: '["apache-php","nginx-php","apache-php-office"]'
   # Images the scheduled/manual rebuild leaves out, each for a reason that a
   # rebuild cannot fix. A push that changes one still builds it.
   #   static-nginx — its base, reg.mini.dev/nginx, refuses anonymous pulls (403),
@@ -287,6 +290,7 @@ jobs:
           CHANGED: ${{ steps.filter.outputs.changes }}
           EVENT: ${{ github.event_name }}
           PHP_VERSIONS: ${{ env.PHP_VERSIONS }}
+          PHP_MATRIX_IMAGES: ${{ env.PHP_MATRIX_IMAGES }}
           SCHEDULE_SKIP: ${{ env.SCHEDULE_SKIP }}
         run: |
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
@@ -295,9 +299,9 @@ jobs:
           else
             changed="${CHANGED:-[]}"
           fi
-          php=$(echo "$changed"    | jq -c '[.[] | select(. == "apache-php" or . == "nginx-php")]')
+          php=$(echo "$changed"    | jq -c --argjson m "$PHP_MATRIX_IMAGES" '[.[] | select(IN($m[]) and . != "apache-php-office")]')
           office=$(echo "$changed" | jq -c '[.[] | select(. == "apache-php-office")]')
-          single=$(echo "$changed" | jq -c '[.[] | select(. != "apache-php" and . != "nginx-php" and . != "apache-php-office")]')
+          single=$(echo "$changed" | jq -c --argjson m "$PHP_MATRIX_IMAGES" '[.[] | select(IN($m[]) | not)]')
           echo "versions=$PHP_VERSIONS" >> "$GITHUB_OUTPUT"
           echo "php=$php"       >> "$GITHUB_OUTPUT"
           echo "office=$office" >> "$GITHUB_OUTPUT"
