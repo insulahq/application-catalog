@@ -7,7 +7,8 @@
 #   PHP_IMAGES  the run's PHP build matrix as JSON, e.g. ["apache-php","nginx-php"]
 #   BASE_REPO   ghcr.io/<owner>/<repo>/apache-php
 #   PHP         this leg's PHP version, e.g. 8.4
-#   SHA         the commit being built
+#   SHA         the run's immutable tag: the commit on a push, <commit>-<run-id>
+#               on a scheduled or manual rebuild (build-images.yml env IMMUTABLE)
 #
 # Outputs ($GITHUB_OUTPUT, or stdout when unset):
 #   build=true|false
@@ -17,7 +18,7 @@
 # matrix holding nginx-php too, and its result is failure if any leg fails —
 # which kept every office version on a weeks-old base while only nginx-php was
 # broken. Office needs exactly one thing: apache-php at its own PHP version, as
-# built by this run. The immutable :<php>-<sha> tag that leg pushes is the
+# built by this run. The immutable :<php>-<SHA> tag that leg pushes is the
 # proof, so check the registry for it instead of inferring it from job results.
 set -euo pipefail
 

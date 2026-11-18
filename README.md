@@ -45,8 +45,17 @@ Buildable runtime/static images publish to **`ghcr.io/insulahq/application-catal
 `.github/workflows/build-images.yml` (tags: `<git-sha>`, `<chart-tag>`, `latest`). Databases and
 services reference upstream public images directly.
 
+Each image is rebuilt when its own files change and again every Monday, without
+the layer cache, so it picks up the OS-package fixes its base and its
+`apk upgrade` / `apt-get upgrade` step pull in. A weekly rebuild republishes the
+moving tags (`<chart-tag>`, `latest`) and takes the immutable tag
+`<git-sha>-<run-id>`. Only an image whose build cannot work is left out (named,
+with the reason, in `SCHEDULE_SKIP` in the workflow); no image is skipped
+because it is stable.
+
 The two PHP runtimes are built once per supported PHP version, so their tags are
-`8.3` / `8.4` / `8.5` (immutable form: `<php>-<git-sha>`), with `latest` tracking
+`8.3` / `8.4` / `8.5` (immutable form: `<php>-<git-sha>`, or `<php>-<git-sha>-<run-id>`
+for a weekly rebuild), with `latest` tracking
 the manifest's `isDefault` version. They are built `FROM serversideup/php`, which
 keeps the `PHP_*` tuning knobs, the non-root runtime, port 8080 and `/healthcheck`
 that the manifests depend on, and add the extension set real applications need —
@@ -56,8 +65,8 @@ memcached and apcu among them.
 The authoritative list is **`scripts/required-php-extensions.txt`**, asserted
 against `php -m` of every built image by `scripts/check-php-extensions.sh` before
 it is pushed. Add an extension to both Dockerfiles *and* that list. Because we
-build these ourselves we also own their base-image patch cadence — a weekly
-scheduled run rebuilds them.
+build these ourselves we also own their base-image patch cadence; the weekly
+rebuild above covers them.
 
 ## Real client IP
 
