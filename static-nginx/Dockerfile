@@ -1,4 +1,12 @@
-# Hardened nginx via Minimus (distroless, non-root uid 1000, listens on :8080).
+# nginx on the official Alpine image, running as non-root uid 1000 and
+# listening on :8080.
+#
+# The nginx version stays at the one this entry has always published as
+# `static-nginx:1.31.2`: deployments reference that tag, so the image under it
+# must keep being that nginx. The weekly rebuild's `apk upgrade` keeps its OS
+# packages current. (Until this image moved off it, the base was Minimus's
+# reg.mini.dev/nginx, which stopped serving anonymous pulls, so the image could
+# no longer be rebuilt.)
 #
 # A tiny static Go entrypoint (worker-entry.go):
 #   1. optionally wires a tenant NGINX config dir (NGINX_CONF_DIR) into the
@@ -8,28 +16,44 @@
 #      cores and badly over-provisions CPU-limited tenant pods.
 #
 # Build context is this directory (build-images.yml: context = static-nginx/).
-FROM reg.mini.dev/nginx:1.31.2 AS base
+FROM nginx:1.31.2-alpine AS base
 
-FROM golang:1.23-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /src
-# Strip `worker_processes` from the base image's OWN nginx.conf (no maintained
-# copy that can drift) so the entrypoint can set it via `-g` without a duplicate.
+# Start from the base image's OWN nginx.conf (no maintained copy that can
+# drift) and change only what running as uid 1000 needs:
+#   - drop `worker_processes`, so the entrypoint can set it via `-g` without a
+#     duplicate;
+#   - drop `user`, which only a root master can act on (nginx warns otherwise);
+#   - move the pid file from root-owned /run to /tmp. `nginx -s reload`, which
+#     the platform execs after a multi-host change, reads it from here.
 COPY --from=base /etc/nginx/nginx.conf /nginx.conf
-RUN sed -i '/^[[:space:]]*worker_processes/d' /nginx.conf
+RUN sed -i -e '/^[[:space:]]*worker_processes/d' \
+           -e '/^[[:space:]]*user[[:space:]]/d' \
+           -e 's#^pid[[:space:]].*#pid        /tmp/nginx.pid;#' /nginx.conf \
+  && grep -q '^pid        /tmp/nginx.pid;$' /nginx.conf
 COPY worker-entry.go .
 # config-readme.txt is //go:embed-ed into the entrypoint so it can be seeded into
 # the tenant's NGINX_CONF_DIR at runtime for in-place guidance.
 COPY config-readme.txt config-readme.txt
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /nginx-workers worker-entry.go
 
-FROM reg.mini.dev/nginx:1.31.2
+FROM nginx:1.31.2-alpine
+# Upgrade the base's own packages first: this tag is no longer rebuilt
+# upstream, so its packages are only as current as our own (weekly) rebuild.
+# Then remove the stock site (a second server on port 80), give the runtime
+# uid nginx's temp dirs, and name uid 1000 the way the other runtimes do.
+RUN apk upgrade --no-cache \
+  && rm -f /etc/nginx/conf.d/default.conf \
+  && adduser -D -H -u 1000 -s /sbin/nologin webuser \
+  && chown -R 1000:1000 /var/cache/nginx
 COPY --from=build /nginx-workers /usr/local/bin/nginx-workers
 COPY --from=build /nginx.conf /etc/nginx/nginx.conf
 COPY nginx.conf /etc/nginx/conf.d/nginx.default.conf
 # Writable include dir. nginx.default.conf does
 # `include /etc/nginx/user-include/*.conf;` inside the server block; when
 # NGINX_CONF_DIR is set the entrypoint writes a glue file here (owned by the
-# runtime uid). A distroless base has no shell, so the dir is created via COPY.
+# runtime uid).
 COPY --chown=1000:1000 user-include/ /etc/nginx/user-include/
 COPY --chown=1000:1000 docroot/ /var/www/html/
 
@@ -37,12 +61,10 @@ COPY --chown=1000:1000 docroot/ /var/www/html/
 # directives every generated site shares. The include glob matches nothing
 # until something is mounted, and a wildcard include matching no files is not
 # an error in nginx — so this is inert on a single-site deployment.
-#
-# A distroless base has no shell, so sites.d is created by COPYing an empty
-# marker into it rather than with mkdir.
 COPY sites-include.conf /etc/nginx/conf.d/zz-insula-sites.conf
 COPY site-common.conf /etc/nginx/insula/site-common.conf
 COPY --chown=1000:1000 sites.d/ /etc/nginx/insula/sites.d/
 
+USER 1000
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/nginx-workers"]

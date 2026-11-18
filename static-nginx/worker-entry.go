@@ -2,7 +2,7 @@
 // from the NGINX_CONF_DIR env var, then (2) set nginx worker_processes from the
 // container's cgroup CPU limit (ceil of cores) and exec nginx.
 //
-// Distroless-friendly: a single static binary, no shell.
+// A single static binary: it needs nothing from the image but nginx itself.
 //
 // (2) exists because nginx's own `worker_processes auto` counts HOST cores, which
 // badly over-provisions CPU-limited pods (e.g. 20 workers in a 0.10-CPU pod on a
@@ -135,7 +135,7 @@ func main() {
 	w, why := workers()
 	fmt.Fprintf(os.Stderr, "[nginx-workers] worker_processes=%d (%s)\n", w, why)
 	argv := []string{
-		"/usr/bin/nginx", "-c", "/etc/nginx/nginx.conf", "-e", "/dev/stderr",
+		"/usr/sbin/nginx", "-c", "/etc/nginx/nginx.conf", "-e", "/dev/stderr",
 		"-g", "worker_processes " + strconv.Itoa(w) + "; daemon off;",
 	}
 	if err := syscall.Exec(argv[0], argv, os.Environ()); err != nil {

@@ -151,12 +151,10 @@ env:
   # The images built once per PHP_VERSIONS entry (apache-php-office in its own
   # job, after apache-php). ci-validate reads this list too.
   PHP_MATRIX_IMAGES: '["apache-php","nginx-php","apache-php-office"]'
-  # Images the scheduled/manual rebuild leaves out, each for a reason that a
-  # rebuild cannot fix. A push that changes one still builds it.
-  #   static-nginx — its base, reg.mini.dev/nginx, refuses anonymous pulls (403),
-  #                  so it cannot build until it has registry credentials or
-  #                  another base.
-  SCHEDULE_SKIP: '["static-nginx"]'
+  # Images the scheduled/manual rebuild leaves out, each named with a reason that
+  # a rebuild cannot fix (e.g. a base that can no longer be pulled). A push that
+  # changes one still builds it. Empty: every image builds.
+  SCHEDULE_SKIP: '[]'
   # The immutable tag this run pushes (prefixed with the PHP version for the
   # PHP images). It must never float: a scheduled or manual rebuild of the same
   # commit is a different image, so it gets the run id as well. Office relies on
