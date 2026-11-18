@@ -2,7 +2,7 @@
     "name": "Static Website (via NGINX)",
     "code": "nginx",
     "type": "static",
-    "version": "1.31.2",
+    "version": "1.31.x",
     "description": "NGINX serving static HTML/CSS/JS sites",
     "category": "static",
     "min_plan": "starter",
@@ -32,7 +32,7 @@
         {
             "name": "static-nginx",
             "type": "deployment",
-            "image": "ghcr.io/insulahq/application-catalog/static-nginx:1.31.2",
+            "image": "ghcr.io/insulahq/application-catalog/static-nginx:1.31",
             "ports": [
                 {
                     "port": 8080,
@@ -40,6 +40,33 @@
                     "ingress": true
                 }
             ]
+        }
+    ],
+    "supportedVersions": [
+        {
+            "version": "1.31.2",
+            "isDefault": false,
+            "components": [
+                {
+                    "name": "static-nginx",
+                    "image": "ghcr.io/insulahq/application-catalog/static-nginx:1.31.2"
+                }
+            ],
+            "upgradeFrom": []
+        },
+        {
+            "version": "1.31.x",
+            "isDefault": true,
+            "components": [
+                {
+                    "name": "static-nginx",
+                    "image": "ghcr.io/insulahq/application-catalog/static-nginx:1.31"
+                }
+            ],
+            "upgradeFrom": [
+                "1.31.2"
+            ],
+            "migrationNotes": "Moves the site to the nginx 1.31 line: the image follows nginx's 1.31 patch releases on the weekly rebuild instead of staying on 1.31.2. Same config layout, user and port; the pod restarts once."
         }
     ],
     "networking": {

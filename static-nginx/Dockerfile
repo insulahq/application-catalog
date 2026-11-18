@@ -1,12 +1,13 @@
 # nginx on the official Alpine image, running as non-root uid 1000 and
 # listening on :8080.
 #
-# The nginx version stays at the one this entry has always published as
-# `static-nginx:1.31.2`: deployments reference that tag, so the image under it
-# must keep being that nginx. The weekly rebuild's `apk upgrade` keeps its OS
-# packages current. (Until this image moved off it, the base was Minimus's
-# reg.mini.dev/nginx, which stopped serving anonymous pulls, so the image could
-# no longer be rebuilt.)
+# It follows nginx's 1.31 line: the base is the floating `nginx:1.31-alpine`
+# tag, so each weekly rebuild picks up nginx's newest 1.31 patch release and
+# Alpine's package fixes, and publishes as `static-nginx:1.31` (the chart tag).
+# Deployments made before the line existed run `static-nginx:1.31.2`, which is
+# no longer rebuilt; the manifest's `1.31.x` version upgrades them from
+# `1.31.2`. (Before that, the base was Minimus's reg.mini.dev/nginx, which
+# stopped serving anonymous pulls, so the image could no longer be rebuilt.)
 #
 # A tiny static Go entrypoint (worker-entry.go):
 #   1. optionally wires a tenant NGINX config dir (NGINX_CONF_DIR) into the
@@ -16,7 +17,7 @@
 #      cores and badly over-provisions CPU-limited tenant pods.
 #
 # Build context is this directory (build-images.yml: context = static-nginx/).
-FROM nginx:1.31.2-alpine AS base
+FROM nginx:1.31-alpine AS base
 
 FROM golang:1.27-alpine AS build
 WORKDIR /src
@@ -38,9 +39,10 @@ COPY worker-entry.go .
 COPY config-readme.txt config-readme.txt
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /nginx-workers worker-entry.go
 
-FROM nginx:1.31.2-alpine
-# Upgrade the base's own packages first: this tag is no longer rebuilt
-# upstream, so its packages are only as current as our own (weekly) rebuild.
+FROM nginx:1.31-alpine
+# Upgrade the base's own packages first: upstream rebuilds its tags on its own
+# schedule, and between those rebuilds its packages are only as current as our
+# own (weekly) rebuild.
 # Then remove the stock site (a second server on port 80), give the runtime
 # uid nginx's temp dirs, and name uid 1000 the way the other runtimes do.
 RUN apk upgrade --no-cache \
