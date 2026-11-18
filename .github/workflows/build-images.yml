@@ -120,15 +120,18 @@ on:
       - 'bun-latest/.dockerignore'
       - '.github/workflows/build-images.yml'
 
-  # Weekly rebuild of the PHP runtimes ONLY. We build these ourselves now, so
-  # the base-image security patches serversideup ship daily no longer reach
-  # tenants for free — this is how we pick them up. Deliberately not extended
-  # to the other runtimes: republishing their moving tags on a timer is a
-  # separate decision with its own drift consequences.
+  # Weekly rebuild of every image we build (less SCHEDULE_SKIP, below). An image
+  # otherwise builds only when its own files change, so its OS packages stay as
+  # they were at that build: the PHP runtimes would miss the patches serversideup
+  # ship in their base, and the other images the ones their `apk upgrade` /
+  # `apt-get upgrade` step would pull in. The rebuild republishes the moving tags
+  # (`<chart-tag>`, `latest`), so a tenant pod picks up the patched image the next
+  # time it pulls. It runs a few hours before the platform's Monday image scan.
   schedule:
     - cron: '17 4 * * 1'
 
-  # Manual rebuild. Pushes only from main (see the push conditions below).
+  # Manual rebuild of the same set. Pushes only from main (see the push
+  # conditions below).
   workflow_dispatch:
 
 # Pull requests: a new push to the branch supersedes the previous check run, so
@@ -145,6 +148,22 @@ env:
   # Every PHP version the apache-php / nginx-php manifests offer. Keep in
   # sync with their supportedVersions arrays — ci-validate checks this.
   PHP_VERSIONS: '["8.3","8.4","8.5"]'
+  # The images built once per PHP_VERSIONS entry (apache-php-office in its own
+  # job, after apache-php). ci-validate reads this list too.
+  PHP_MATRIX_IMAGES: '["apache-php","nginx-php","apache-php-office"]'
+  # Images the scheduled/manual rebuild leaves out, each for a reason that a
+  # rebuild cannot fix. A push that changes one still builds it.
+  #   static-nginx — its base, reg.mini.dev/nginx, refuses anonymous pulls (403),
+  #                  so it cannot build until it has registry credentials or
+  #                  another base.
+  SCHEDULE_SKIP: '["static-nginx"]'
+  # The immutable tag this run pushes (prefixed with the PHP version for the
+  # PHP images). It must never float: a scheduled or manual rebuild of the same
+  # commit is a different image, so it gets the run id as well. Office relies on
+  # it too: finding apache-php's tag in the registry is its proof that THIS run
+  # published the base, which a commit-only tag left by last week's rebuild
+  # would fake.
+  IMMUTABLE: ${{ github.event_name == 'push' && github.sha || format('{0}-{1}', github.sha, github.run_id) }}
 
 jobs:
   detect:
@@ -262,22 +281,27 @@ jobs:
 
       # Split the changed set into "PHP runtimes" (version matrix) and
       # "everything else" (single build). On schedule/workflow_dispatch there
-      # is no diff to filter, so rebuild the PHP runtimes unconditionally.
+      # is no diff to filter, so rebuild every image: each top-level directory
+      # with a Dockerfile (the same set the filters above name), less
+      # SCHEDULE_SKIP.
       - name: Split changed images
         id: split
         env:
           CHANGED: ${{ steps.filter.outputs.changes }}
           EVENT: ${{ github.event_name }}
           PHP_VERSIONS: ${{ env.PHP_VERSIONS }}
+          PHP_MATRIX_IMAGES: ${{ env.PHP_MATRIX_IMAGES }}
+          SCHEDULE_SKIP: ${{ env.SCHEDULE_SKIP }}
         run: |
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then
-            changed='["apache-php","nginx-php","apache-php-office"]'
+            changed=$(find . -mindepth 2 -maxdepth 2 -name Dockerfile -printf '%h\n' | sed 's|^\./||' | sort \
+              | jq -Rsc --argjson skip "$SCHEDULE_SKIP" 'split("\n") | map(select(. != "" and (IN($skip[]) | not)))')
           else
             changed="${CHANGED:-[]}"
           fi
-          php=$(echo "$changed"    | jq -c '[.[] | select(. == "apache-php" or . == "nginx-php")]')
+          php=$(echo "$changed"    | jq -c --argjson m "$PHP_MATRIX_IMAGES" '[.[] | select(IN($m[]) and . != "apache-php-office")]')
           office=$(echo "$changed" | jq -c '[.[] | select(. == "apache-php-office")]')
-          single=$(echo "$changed" | jq -c '[.[] | select(. != "apache-php" and . != "nginx-php" and . != "apache-php-office")]')
+          single=$(echo "$changed" | jq -c --argjson m "$PHP_MATRIX_IMAGES" '[.[] | select(IN($m[]) | not)]')
           echo "versions=$PHP_VERSIONS" >> "$GITHUB_OUTPUT"
           echo "php=$php"       >> "$GITHUB_OUTPUT"
           echo "office=$office" >> "$GITHUB_OUTPUT"
@@ -329,29 +353,71 @@ jobs:
           echo "Resolved chart tag: '${chart_tag}'"
 
       - name: Login to GHCR
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build${{ github.event_name == 'push' && ' & push' || '' }}
+      # Build and LOAD first (never push straight from the build): the image
+      # has to start before anything can pull it, and on a scheduled rebuild
+      # nobody is watching.
+      #
+      # A scheduled or manual rebuild skips the layer cache. Its whole point is
+      # the `apk upgrade` / `apt-get upgrade` step, and that step's cache key is
+      # only the base digest plus the command, so a base nobody rebuilds any
+      # more (rust:1.85-slim, golang:1.22-alpine) would hand back last build's
+      # packages from the cache.
+      - name: Build (load locally)
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.image }}
-          push: ${{ github.event_name == 'push' }}
-          # Three tags on push:
-          #   :<git-sha>      — immutable, traceable, never floats
-          #   :<chart-tag>    — version-pinned, used by manifest/chart refs
-          #   :latest         — moving, for opt-in latest pulls
-          # PRs build only (no push) — sanity check.
-          tags: |
-            ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ github.sha }}
-            ${{ steps.tag.outputs.chart_tag != '' && format('ghcr.io/{0}/{1}:{2}', github.repository, matrix.image, steps.tag.outputs.chart_tag) || '' }}
-            ghcr.io/${{ github.repository }}/${{ matrix.image }}:latest
+          load: true
+          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+          tags: local/${{ matrix.image }}:check
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+      # The gate: the image starts and stays up. With nothing mounted, a
+      # runtime image idles (its CMD's fallback) and a static image serves its
+      # default page, so either way the container is still running.
+      - name: Smoke test the image
+        env:
+          LOCAL: local/${{ matrix.image }}:check
+        run: |
+          set -euo pipefail
+          cid=$(docker run -d "$LOCAL")
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          sleep 10
+          if [ "$(docker inspect -f '{{.State.Running}}' "$cid")" != "true" ]; then
+            echo "::error::${{ matrix.image }} did not stay up (exit code $(docker inspect -f '{{.State.ExitCode}}' "$cid"))"
+            docker logs "$cid" 2>&1 | tail -50
+            exit 1
+          fi
+          echo "${{ matrix.image }} is up after 10s:"
+          docker logs "$cid" 2>&1 | tail -5
+
+      # Three tags:
+      #   :<IMMUTABLE>    — the commit, or commit-run on a rebuild (see env);
+      #                     traceable, never floats
+      #   :<chart-tag>    — version-pinned, used by manifest/chart refs
+      #   :latest         — moving, for opt-in latest pulls
+      # PRs build only (no push) — sanity check.
+      - name: Push
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          REPO: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          LOCAL: local/${{ matrix.image }}:check
+          CHART_TAG: ${{ steps.tag.outputs.chart_tag }}
+        run: |
+          set -euo pipefail
+          tags="$IMMUTABLE ${CHART_TAG} latest"
+          for t in $tags; do
+            docker tag "$LOCAL" "$REPO:$t"
+            docker push "$REPO:$t"
+            echo "pushed $REPO:$t"
+          done
 
   build-php:
     name: Build ${{ matrix.image }} (PHP ${{ matrix.php }})
@@ -405,6 +471,8 @@ jobs:
           context: ${{ matrix.image }}
           build-args: PHP_VERSION=${{ matrix.php }}
           load: true
+          # As in `build`: a rebuild is for the packages, not from the cache.
+          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
           tags: local/${{ matrix.image }}:${{ matrix.php }}
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.php }}
           cache-to: type=gha,scope=${{ matrix.image }}-${{ matrix.php }},mode=max
@@ -491,10 +559,10 @@ jobs:
           LOCAL: local/${{ matrix.image }}:${{ matrix.php }}
         run: |
           set -euo pipefail
-          # :<php>-<sha> is immutable and traceable. The bare :<php> tag is
-          # what the catalog manifests reference. :latest only for the
-          # manifest's default version.
-          tags="${{ matrix.php }}-${{ github.sha }} ${{ matrix.php }}"
+          # :<php>-<IMMUTABLE> is immutable and traceable (see env). The bare
+          # :<php> tag is what the catalog manifests reference. :latest only
+          # for the manifest's default version.
+          tags="${{ matrix.php }}-${IMMUTABLE} ${{ matrix.php }}"
           if [ "${{ matrix.php }}" = "${{ steps.default.outputs.version }}" ]; then
             tags="$tags latest"
           fi
@@ -543,8 +611,8 @@ jobs:
 
       # Which apache-php to build on, per PHP version:
       #   - a run that pushes (main) and rebuilt apache-php: exactly the image
-      #     that run published, by its immutable :<php>-<sha> tag. If that tag is
-      #     missing, this version's apache-php leg failed or a newer run
+      #     that run published, by its immutable :<php>-<IMMUTABLE> tag. If that
+      #     tag is missing, this version's apache-php leg failed or a newer run
       #     superseded it — skip with a warning rather than ship office on a
       #     stale base. The failed leg already turns the run red, and a newer
       #     run that rebuilt apache-php rebuilds office too (office's path
@@ -558,7 +626,7 @@ jobs:
           PHP_IMAGES: ${{ needs.detect.outputs.php }}
           BASE_REPO: ghcr.io/${{ github.repository }}/apache-php
           PHP: ${{ matrix.php }}
-          SHA: ${{ github.sha }}
+          SHA: ${{ env.IMMUTABLE }}
         run: scripts/resolve-office-base.sh
 
       - uses: docker/setup-buildx-action@v3
@@ -595,6 +663,7 @@ jobs:
             PHP_VERSION=${{ matrix.php }}
             BASE_TAG=${{ steps.base.outputs.tag }}
           load: true
+          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
           tags: local/apache-php-office:${{ matrix.php }}
           cache-from: type=gha,scope=apache-php-office-${{ matrix.php }}
           cache-to: type=gha,scope=apache-php-office-${{ matrix.php }},mode=max
@@ -637,7 +706,7 @@ jobs:
           LOCAL: local/apache-php-office:${{ matrix.php }}
         run: |
           set -euo pipefail
-          tags="${{ matrix.php }}-${{ github.sha }} ${{ matrix.php }}"
+          tags="${{ matrix.php }}-${IMMUTABLE} ${{ matrix.php }}"
           if [ "${{ matrix.php }}" = "${{ steps.default.outputs.version }}" ]; then
             tags="$tags latest"
           fi
