@@ -8,14 +8,14 @@
     "min_plan": "starter",
     "runtime": "postgresql",
     "web_server": null,
-    "image": "postgres:18",
+    "image": "postgres:18-trixie",
     "has_dockerfile": false,
     "deployment_strategy": "deployment",
     "components": [
         {
             "name": "postgresql",
             "type": "deployment",
-            "image": "postgres:18",
+            "image": "postgres:18-trixie",
             "database": "postgresql",
             "ports": [
                 {
@@ -115,7 +115,7 @@
             "components": [
                 {
                     "name": "postgresql",
-                    "image": "postgres:18"
+                    "image": "postgres:18-trixie"
                 }
             ],
             "volumes": [
